@@ -70,7 +70,7 @@ local index_page_template = [[<html>
     <%- description %>
     <hr />
     <% if #episodes_list > 0 then %>
-      <% for i = #episodes_list, 1 do %>
+      <% for i = #episodes_list, 1, -1 do %>
         <% local episode = episodes_data[ episodes_list[i] ] %>
         <h2><a href="<%- base_url %><%- episode.urlencoded_title %>.html"><%= episode.title %></a></h2>
         <img src="<%- base_url %><%- episode.urlencoded_title %>.jpg" />
@@ -219,7 +219,7 @@ local function publish_episode(episode_title)
   local episode_number = #database.episodes_list + 1
   episode.episode_number = episode_number
   episode.file_size = utility.file_size(episode.file_name .. ".mp3")
-  episode.published_datetime = os.date("%a, %d %b %Y %H:%M:%S GMT", os.time() + database.timezone_offset * 60 * 60)
+  episode.published_datetime = os.date("%a, %d %b %Y %H:%M:%S GMT", os.time() - database.timezone_offset * 60 * 60)
 
   database.episodes_list[episode_number] = episode.title
 
