@@ -63,8 +63,8 @@ local episode_page_template = [[<html>
     <p><a href="<%- base_url %>">homepage</a></p>
     <h1><%= episode_title %></h1>
     <br />
-    <img src="<%- base_url %><%= urlencoded_title %>.jpg" />
-    <audio controls src="<%- base_url %><%= urlencoded_title %>.mp3"></audio>
+    <img src="<%- base_url %><%- urlencoded_title %>.jpg" />
+    <audio controls src="<%- base_url %><%- urlencoded_title %>.mp3"></audio>
     <% if escaped_summary then %>
       <%- escaped_summary %>
     <% else %>
