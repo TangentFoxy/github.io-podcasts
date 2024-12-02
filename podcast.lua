@@ -175,8 +175,8 @@ local function publish_episode(episode_title)
     file:write(episode_page_content)
   end)
 
-  os.execute("mv " .. (episode.file_name .. ".mp3"):enquote() "docs/")
-  os.execute("mv " .. (episode.file_name .. ".jpg"):enquote() "docs/")
+  os.execute("mv " .. (episode.file_name .. ".mp3"):enquote() .. " " .. ("docs/" .. episode.file_name .. ".mp3"):enquote())
+  os.execute("mv " .. (episode.file_name .. ".jpg"):enquote() .. " " .. ("docs/" .. episode.file_name .. ".jpg"):enquote())
 
   save_database(database)
 end
