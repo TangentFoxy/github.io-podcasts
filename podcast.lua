@@ -70,7 +70,7 @@ local episode_page_template = [[
     <% if escaped_summary then %>
       <%- escaped_summary %>
     <% else %>
-      <%= episode_summary %>
+      <p><%= episode_summary %></p>
     <% end %>
   </div>
   </body>
@@ -131,6 +131,19 @@ local function new_episode(episode_title, file_name, skip_mp3tag) -- skip_descri
   save_database(database)
 end
 
+local function generate_feed(database)
+  local etlua = require("etlua")
+
+  local feed_content = etlua.compile(feed_template)(database)
+  utility.open("docs/feed.xml", "w")(function(file)
+    file:write(feed_content)
+  end)
+
+  -- TODO this should also generate index.html!
+
+  return true
+end
+
 local function publish_episode(episode_title)
   local database = load_database()
   local etlua = require("etlua")
@@ -140,7 +153,7 @@ local function publish_episode(episode_title)
 
   local episode_number = #database.episodes_list + 1
   episode.episode_number = episode_number
-  episode.file_size = utility.file_size((episode.file_name .. ".mp3"):enquote())
+  episode.file_size = utility.file_size(episode.file_name .. ".mp3")
   episode.published_datetime = os.date("%a, %d %b %Y %H:%M:%S GMT", os.time() + database.timezone_offset * 60 * 60)
 
   database.episodes_list[episode_number] = episode.title
@@ -148,10 +161,7 @@ local function publish_episode(episode_title)
   -- NOTE I want to allow truncated summaries
 
   -- TODO in the future, don't recompile the ENTIRE thing just for adding an episode
-  local feed_content = etlua.compile(feed_template)(database)
-  utility.open("docs/feed.xml", "w")(function(file)
-    file:write(feed_content)
-  end)
+  generate_feed(database)
 
   local episode_page_content = etlua.compile(episode_page_template)({
     podcast_title = database.title,
@@ -164,6 +174,35 @@ local function publish_episode(episode_title)
   utility.open("docs/" .. episode.file_name .. ".html", "w")(function(file)
     file:write(episode_page_content)
   end)
+
+  os.execute("mv " .. (episode.file_name .. ".mp3"):enquote() "docs/")
+  os.execute("mv " .. (episode.file_name .. ".jpg"):enquote() "docs/")
+
+  save_database(database)
+end
+
+local function delete_episode(episode_title)
+  local database = load_database()
+
+  local episode = database.episodes_data[episode_title]
+  if not episode then error("Episode " .. episode_title:enquote() .. " does not exist.") end
+
+  os.execute("mkdir .trash")
+
+  if episode.episode_number then
+    table.remove(database.episodes_list, episode.episode_number)
+    os.execute("mv " .. ("docs/" .. episode.file_name .. ".mp3"):enquote() .. " .trash/")
+    os.execute("mv " .. ("docs/" .. episode.file_name .. ".jpg"):enquote() .. " .trash/")
+    os.execute("mv " .. ("docs/" .. episode.file_name .. ".html"):enquote() .. " .trash/")
+    generate_feed(database)
+  else
+    os.execute("mv " .. (episode.file_name .. ".mp3"):enquote() .. " .trash/")
+    os.execute("mv " .. (episode.file_name .. ".jpg"):enquote() .. " .trash/")
+  end
+  database.episodes_data[episode_title] = nil
+
+  -- TODO add a force-deletion argument to delete instead of move
+  print("Any MP3, JPG, or HTML files have been moved to ./.trash as a precaution against data loss.")
 
   save_database(database)
 end
@@ -187,6 +226,8 @@ end
 local function main(arguments)
   local actions = {
     new = new_episode,
+    publish = publish_episode,
+    delete = delete_episode,
   }
   return actions[arguments.action](arguments.title, arguments.file_name)
 end
