@@ -10,7 +10,7 @@ Requirements:
 - notepad (lol)
 ]]
 
-local feed_template = [[<?xml version="1.0" encoding="UTF-8"?>
+local feed_template = [=[<?xml version="1.0" encoding="UTF-8"?>
   <rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"  xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title><%= title %></title>
@@ -30,23 +30,25 @@ local feed_template = [[<?xml version="1.0" encoding="UTF-8"?>
       <% end %>
     <% end %>
     <itunes:explicit><%= tostring(explicit) %></itunes:explicit>
-    <% for _, episode_title in ipairs(episodes_list) do %>
-      <% local episode = episodes_data[episode_title] %>
-      <item>
-        <title><%= episode.title %></title>
-        <link><%- base_url %><%- episode.urlencoded_title %>.html</link>
-        <description><%= episode.summary %></description>
-        <enclosure length="<%= episode.file_size %>" type="audio/mpeg" url="<%- base_url %><%- episode.urlencoded_title %>.mp3" />
-        <pubDate><%= episode.published_datetime %></pubDate>
-        <guid><%= episode.guid %></guid>
-        <itunes:duration><%= episode.duration_seconds %></itunes:duration>
-        <itunes:episode><%= episode.episode_number %></itunes:episode>
-        <itunes:image href="<%- base_url %><%- episode.urlencoded_title %>.jpg" />
-      </item>
+    <% if #episodes_list > 0 then %>
+      <% for _, episode_title in ipairs(episodes_list) do %>
+        <% local episode = episodes_data[episode_title] %>
+        <item>
+          <title><%= episode.title %></title>
+          <link><%- base_url %><%- episode.urlencoded_title %>.html</link>
+          <description><![CDATA[<%- episode.summary %>]]</description>
+          <enclosure length="<%= episode.file_size %>" type="audio/mpeg" url="<%- base_url %><%- episode.urlencoded_title %>.mp3" />
+          <pubDate><%= episode.published_datetime %></pubDate>
+          <guid><%= episode.guid %></guid>
+          <itunes:duration><%= episode.duration_seconds %></itunes:duration>
+          <itunes:episode><%= episode.episode_number %></itunes:episode>
+          <itunes:image href="<%- base_url %><%- episode.urlencoded_title %>.jpg" />
+        </item>
+      <% end %>
     <% end %>
   </channel>
   </rss>
-]]
+]=]
 
 local index_page_template = [[<html>
   <head>
@@ -67,11 +69,13 @@ local index_page_template = [[<html>
     <img id="podcast" src="<%- base_url %>podcast.jpg" />
     <p><%= description %></p>
     <hr />
-    <% for i = #episodes_list, 1 do %>
-      <% local episode = episodes_data[ episodes_list[i] ] %>
-      <h2><a href="<%- base_url %><%- episode.urlencoded_title %>.html"><%= episode.title %></a></h2>
-      <img src="<%- base_url %><%- episode.urlencoded_title %>.jpg" />
-      <p><%= episode.summary %></p>
+    <% if #episodes_list > 0 then %>
+      <% for i = #episodes_list, 1 do %>
+        <% local episode = episodes_data[ episodes_list[i] ] %>
+        <h2><a href="<%- base_url %><%- episode.urlencoded_title %>.html"><%= episode.title %></a></h2>
+        <img src="<%- base_url %><%- episode.urlencoded_title %>.jpg" />
+        <%- episode.summary %>
+      <% end %>
     <% end %>
   </div>
   </body>
@@ -94,11 +98,7 @@ local episode_page_template = [[<html>
     <h1><%= episode_title %></h1>
     <img src="<%- base_url %><%- urlencoded_title %>.jpg" />
     <audio controls src="<%- base_url %><%- urlencoded_title %>.mp3"></audio>
-    <% if escaped_summary then %>
-      <%- escaped_summary %>
-    <% else %>
-      <p><%= episode_summary %></p>
-    <% end %>
+    <%- episode_summary %>
   </div>
   </body>
   </html>
@@ -128,6 +128,7 @@ end
 local function new_episode(episode_title, file_name, skip_mp3tag) -- skip_description option?
   local database = load_database()
   local urlencode = require("urlencode")
+  local markdown = require("markdown")
 
   -- TODO check if the title already exists and error out if it does
 
@@ -145,7 +146,7 @@ local function new_episode(episode_title, file_name, skip_mp3tag) -- skip_descri
   os.execute("rm NULL") -- fuck you Windows; why the fuck are you creating this file?
   os.execute("notepad new_episode.description") -- this is blocking
   utility.open("new_episode.description", "r")(function(file)
-    episode.summary = file:read("*all")
+    episode.summary = markdown(file:read("*all"))
   end)
 
   if not skip_mp3tag then
@@ -181,7 +182,6 @@ local function generate_page(database, episode)
     podcast_title = database.title,
     episode_title = episode.title,
     urlencoded_title = episode.urlencoded_title,
-    -- escaped_summary = -- TODO figure this shit out, probably with markdown
     episode_summary = episode.summary,
     base_url = database.base_url,
   })
@@ -248,7 +248,7 @@ local function delete_episode(episode_title)
     os.execute("mv " .. ("docs/" .. episode.file_name .. ".mp3"):enquote() .. " .trash/")
     os.execute("mv " .. ("docs/" .. episode.file_name .. ".jpg"):enquote() .. " .trash/")
     os.execute("mv " .. ("docs/" .. episode.file_name .. ".html"):enquote() .. " .trash/")
-    generate_feed(database)
+    generate_everything(database)
   else
     os.execute("mv " .. (episode.file_name .. ".mp3"):enquote() .. " .trash/")
     os.execute("mv " .. (episode.file_name .. ".jpg"):enquote() .. " .trash/")

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
   <rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"  xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
-    <title>A GitHub.io Podcast</title>
+    <title>github.io-podcasts example podcast</title>
     <link>https://tangentfoxy.github.io/github.io-podcasts/</link>
-    <description>The default/example podcast of github.io-podcasts!</description>
+    <description>The default/example podcast of github.io-podcasts! See https://github.com/TangentFoxy/github.io-podcasts for more information!</description>
     <language>en</language>
     <itunes:image href="https://tangentfoxy.github.io/github.io-podcasts/podcast.jpg" />
     
@@ -14,19 +14,24 @@
     <itunes:explicit>false</itunes:explicit>
     
       
-      <item>
-        <title>This #Title Contains @Special Characters and a looong title for testing purposes!</title>
-        <link>https://tangentfoxy.github.io/github.io-podcasts/This%20%23Title%20Contains%20%40Special%20Characters%20and%20a%20looong%20title%20for%20testing%20purposes%21.html</link>
-        <description>There currently isn&#039;t a way to specify that this text is supposed to be HTML or not supposed to be HTML. I&#039;m not quite sure how I&#039;ll fix that yet. :D
+        
+        <item>
+          <title>This #Title Contains @Special Characters and a looong title for testing purposes!</title>
+          <link>https://tangentfoxy.github.io/github.io-podcasts/This%20%23Title%20Contains%20%40Special%20Characters%20and%20a%20looong%20title%20for%20testing%20purposes%21.html</link>
+          <description><![CDATA[
+<p>This episode was published as a <em>very fast</em> test to make sure it works.</p>
 
-In the meantime, I added a couple newlines and here&#039;s a tag that should be escaped because it shouldn&#039;t be here! &lt;img&gt;</description>
-        <enclosure length="154253" type="audio/mpeg" url="https://tangentfoxy.github.io/github.io-podcasts/This%20%23Title%20Contains%20%40Special%20Characters%20and%20a%20looong%20title%20for%20testing%20purposes%21.mp3" />
-        <pubDate>Sun, 01 Dec 2024 14:50:05 GMT</pubDate>
-        <guid>0d2f4e33-40dc-49a2-a475-9ef31a08aafb</guid>
-        <itunes:duration>9</itunes:duration>
-        <itunes:episode>1</itunes:episode>
-        <itunes:image href="https://tangentfoxy.github.io/github.io-podcasts/This%20%23Title%20Contains%20%40Special%20Characters%20and%20a%20looong%20title%20for%20testing%20purposes%21.jpg" />
-      </item>
+<p>Let's make sure <a href="https://blog.tangentfox.com">links</a> and <code>similar</code> formatting works. Also this should be properly displayed as <code>&lt;img&gt;</code>: \<img></p>
+
+]]</description>
+          <enclosure length="154253" type="audio/mpeg" url="https://tangentfoxy.github.io/github.io-podcasts/This%20%23Title%20Contains%20%40Special%20Characters%20and%20a%20looong%20title%20for%20testing%20purposes%21.mp3" />
+          <pubDate>Sun, 01 Dec 2024 15:43:41 GMT</pubDate>
+          <guid>56fe278b-0caf-47c2-a145-c9a1ae69f934</guid>
+          <itunes:duration>9</itunes:duration>
+          <itunes:episode>1</itunes:episode>
+          <itunes:image href="https://tangentfoxy.github.io/github.io-podcasts/This%20%23Title%20Contains%20%40Special%20Characters%20and%20a%20looong%20title%20for%20testing%20purposes%21.jpg" />
+        </item>
+      
     
   </channel>
   </rss>
