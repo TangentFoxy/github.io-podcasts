@@ -21,40 +21,10 @@
 
 In the meantime, I added a couple newlines and here&#039;s a tag that should be escaped because it shouldn&#039;t be here! &lt;img&gt;</description>
         <enclosure length="154253" type="audio/mpeg" url="https://tangentfoxy.github.io/github.io-podcasts/This%20%23Title%20Contains%20%40Special%20Characters%20and%20a%20looong%20title%20for%20testing%20purposes%21.mp3" />
-        <pubDate>Sun, 01 Dec 2024 14:39:08 GMT</pubDate>
-        <guid>f9009b0b-bdce-4770-a365-48b23aacd35b</guid>
+        <pubDate>Sun, 01 Dec 2024 14:50:05 GMT</pubDate>
+        <guid>0d2f4e33-40dc-49a2-a475-9ef31a08aafb</guid>
         <itunes:duration>9</itunes:duration>
-        <itunes:episode>3</itunes:episode>
-        <itunes:image href="https://tangentfoxy.github.io/github.io-podcasts/This%20%23Title%20Contains%20%40Special%20Characters%20and%20a%20looong%20title%20for%20testing%20purposes%21.jpg" />
-      </item>
-    
-      
-      <item>
-        <title>This #Title Contains @Special Characters and a looong title for testing purposes!</title>
-        <link>https://tangentfoxy.github.io/github.io-podcasts/This%20%23Title%20Contains%20%40Special%20Characters%20and%20a%20looong%20title%20for%20testing%20purposes%21.html</link>
-        <description>There currently isn&#039;t a way to specify that this text is supposed to be HTML or not supposed to be HTML. I&#039;m not quite sure how I&#039;ll fix that yet. :D
-
-In the meantime, I added a couple newlines and here&#039;s a tag that should be escaped because it shouldn&#039;t be here! &lt;img&gt;</description>
-        <enclosure length="154253" type="audio/mpeg" url="https://tangentfoxy.github.io/github.io-podcasts/This%20%23Title%20Contains%20%40Special%20Characters%20and%20a%20looong%20title%20for%20testing%20purposes%21.mp3" />
-        <pubDate>Sun, 01 Dec 2024 14:39:08 GMT</pubDate>
-        <guid>f9009b0b-bdce-4770-a365-48b23aacd35b</guid>
-        <itunes:duration>9</itunes:duration>
-        <itunes:episode>3</itunes:episode>
-        <itunes:image href="https://tangentfoxy.github.io/github.io-podcasts/This%20%23Title%20Contains%20%40Special%20Characters%20and%20a%20looong%20title%20for%20testing%20purposes%21.jpg" />
-      </item>
-    
-      
-      <item>
-        <title>This #Title Contains @Special Characters and a looong title for testing purposes!</title>
-        <link>https://tangentfoxy.github.io/github.io-podcasts/This%20%23Title%20Contains%20%40Special%20Characters%20and%20a%20looong%20title%20for%20testing%20purposes%21.html</link>
-        <description>There currently isn&#039;t a way to specify that this text is supposed to be HTML or not supposed to be HTML. I&#039;m not quite sure how I&#039;ll fix that yet. :D
-
-In the meantime, I added a couple newlines and here&#039;s a tag that should be escaped because it shouldn&#039;t be here! &lt;img&gt;</description>
-        <enclosure length="154253" type="audio/mpeg" url="https://tangentfoxy.github.io/github.io-podcasts/This%20%23Title%20Contains%20%40Special%20Characters%20and%20a%20looong%20title%20for%20testing%20purposes%21.mp3" />
-        <pubDate>Sun, 01 Dec 2024 14:39:08 GMT</pubDate>
-        <guid>f9009b0b-bdce-4770-a365-48b23aacd35b</guid>
-        <itunes:duration>9</itunes:duration>
-        <itunes:episode>3</itunes:episode>
+        <itunes:episode>1</itunes:episode>
         <itunes:image href="https://tangentfoxy.github.io/github.io-podcasts/This%20%23Title%20Contains%20%40Special%20Characters%20and%20a%20looong%20title%20for%20testing%20purposes%21.jpg" />
       </item>
     
