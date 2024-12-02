@@ -219,7 +219,7 @@ local function publish_episode(episode_title)
   local episode_number = #database.episodes_list + 1
   episode.episode_number = episode_number
   episode.file_size = utility.file_size(episode.file_name .. ".mp3")
-  episode.published_datetime = os.date("%a, %d %b %Y %H:%M:%S GMT", os.time() + database.timezone_offset * 60 * 60)
+  episode.published_datetime = os.date("%a, %d %b %Y %H:%M:%S GMT", os.time() - database.timezone_offset * 60 * 60)
 
   database.episodes_list[episode_number] = episode.title
 
