@@ -3,7 +3,7 @@
   <channel>
     <title>github.io-podcasts example podcast</title>
     <link>https://tangentfoxy.github.io/github.io-podcasts/</link>
-    <description>The default/example podcast of github.io-podcasts! See https://github.com/TangentFoxy/github.io-podcasts for more information!</description>
+    <description><![CDATA[<p>The default/example podcast of github.io-podcasts! See <a href="https://github.com/TangentFoxy/github.io-podcasts">https://github.com/TangentFoxy/github.io-podcasts</a> for more information!</p>]]></description>
     <language>en</language>
     <itunes:image href="https://tangentfoxy.github.io/github.io-podcasts/podcast.jpg" />
     
@@ -21,9 +21,9 @@
           <description><![CDATA[
 <p>This episode was published as a <em>very fast</em> test to make sure it works.</p>
 
-<p>Let's make sure <a href="https://blog.tangentfox.com">links</a> and <code>similar</code> formatting works. Also this should be properly displayed as <code>&lt;img&gt;</code>: \<img></p>
+<p>Let's make sure <a href="https://blog.tangentfox.com">links</a> and <code>similar</code> formatting works. Also this should be properly displayed as <code>&lt;img&gt;</code>: (I actually screwed it up and had to manually fix this. Whoops!)</p>
 
-]]</description>
+]]></description>
           <enclosure length="154253" type="audio/mpeg" url="https://tangentfoxy.github.io/github.io-podcasts/This%20%23Title%20Contains%20%40Special%20Characters%20and%20a%20looong%20title%20for%20testing%20purposes%21.mp3" />
           <pubDate>Sun, 01 Dec 2024 15:43:41 GMT</pubDate>
           <guid>56fe278b-0caf-47c2-a145-c9a1ae69f934</guid>
