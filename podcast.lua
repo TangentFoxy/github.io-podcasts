@@ -14,7 +14,7 @@ local utility = require("utility")
 local function load_database()
   local json = require("json")
   local database
-  utility.open("episodes.json", "r", function(file)
+  utility.open("configuration.json", "r", function(file)
     database = json.decode(file:read("*all"))
   end)
   return database
@@ -22,7 +22,7 @@ end
 
 local function save_database(database)
   local json = require("json")
-  utility.open("episodes.json", "w", function(file)
+  utility.open("configuration.json", "w", function(file)
     file:write(json.encode(database))
   end)
 end
