@@ -104,10 +104,10 @@ local episode_page_template = [[<html>
   </html>
 ]]
 
-local utility = require("utility")
+local utility = require("lib.utility")
 
 local function load_database()
-  local json = require("json")
+  local json = require("lib.json")
   local database
   utility.open("configuration.json", "r")(function(file)
     database = json.decode(file:read("*all"))
@@ -116,7 +116,7 @@ local function load_database()
 end
 
 local function save_database(database)
-  local json = require("json")
+  local json = require("lib.json")
   utility.open("configuration.json", "w")(function(file)
     file:write(json.encode(database))
   end)
@@ -127,8 +127,8 @@ end
 --   MP3 file and JPG file should already exist in the local directory when you run this!
 local function new_episode(episode_title, file_name, skip_mp3tag) -- skip_description option?
   local database = load_database()
-  local urlencode = require("urlencode")
-  local markdown = require("markdown")
+  local urlencode = require("lib.urlencode")
+  local markdown = require("lib.markdown")
 
   -- TODO check if the title already exists and error out if it does
 
@@ -160,7 +160,7 @@ local function new_episode(episode_title, file_name, skip_mp3tag) -- skip_descri
 end
 
 local function generate_feed(database)
-  local etlua = require("etlua")
+  local etlua = require("lib.etlua")
 
   local feed_content = etlua.compile(feed_template)(database)
   utility.open("docs/feed.xml", "w")(function(file)
@@ -176,7 +176,7 @@ local function generate_feed(database)
 end
 
 local function generate_page(database, episode)
-  local etlua = require("etlua")
+  local etlua = require("lib.etlua")
 
   local episode_page_content = etlua.compile(episode_page_template)({
     podcast_title = database.title,
@@ -193,7 +193,7 @@ local function generate_page(database, episode)
 end
 
 local function generate_all_pages(database)
-  local etlua = require("etlua")
+  local etlua = require("lib.etlua")
 
   for _, episode_title in ipairs(database.episodes_list) do
     local episode = database.episodes_data[episode_title]
