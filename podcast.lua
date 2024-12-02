@@ -30,19 +30,21 @@ local feed_template = [=[<?xml version="1.0" encoding="UTF-8"?>
       <% end %>
     <% end %>
     <itunes:explicit><%= tostring(explicit) %></itunes:explicit>
-    <% for _, episode_title in ipairs(episodes_list) do %>
-      <% local episode = episodes_data[episode_title] %>
-      <item>
-        <title><%= episode.title %></title>
-        <link><%- base_url %><%- episode.urlencoded_title %>.html</link>
-        <description><![CDATA[<%- episode.summary %>]]</description>
-        <enclosure length="<%= episode.file_size %>" type="audio/mpeg" url="<%- base_url %><%- episode.urlencoded_title %>.mp3" />
-        <pubDate><%= episode.published_datetime %></pubDate>
-        <guid><%= episode.guid %></guid>
-        <itunes:duration><%= episode.duration_seconds %></itunes:duration>
-        <itunes:episode><%= episode.episode_number %></itunes:episode>
-        <itunes:image href="<%- base_url %><%- episode.urlencoded_title %>.jpg" />
-      </item>
+    <% if #episodes_list > 0 then %>
+      <% for _, episode_title in ipairs(episodes_list) do %>
+        <% local episode = episodes_data[episode_title] %>
+        <item>
+          <title><%= episode.title %></title>
+          <link><%- base_url %><%- episode.urlencoded_title %>.html</link>
+          <description><![CDATA[<%- episode.summary %>]]</description>
+          <enclosure length="<%= episode.file_size %>" type="audio/mpeg" url="<%- base_url %><%- episode.urlencoded_title %>.mp3" />
+          <pubDate><%= episode.published_datetime %></pubDate>
+          <guid><%= episode.guid %></guid>
+          <itunes:duration><%= episode.duration_seconds %></itunes:duration>
+          <itunes:episode><%= episode.episode_number %></itunes:episode>
+          <itunes:image href="<%- base_url %><%- episode.urlencoded_title %>.jpg" />
+        </item>
+      <% end %>
     <% end %>
   </channel>
   </rss>
@@ -67,11 +69,13 @@ local index_page_template = [[<html>
     <img id="podcast" src="<%- base_url %>podcast.jpg" />
     <p><%= description %></p>
     <hr />
-    <% for i = #episodes_list, 1 do %>
-      <% local episode = episodes_data[ episodes_list[i] ] %>
-      <h2><a href="<%- base_url %><%- episode.urlencoded_title %>.html"><%= episode.title %></a></h2>
-      <img src="<%- base_url %><%- episode.urlencoded_title %>.jpg" />
-      <%- episode.summary %>
+    <% if #episodes_list > 0 then %>
+      <% for i = #episodes_list, 1 do %>
+        <% local episode = episodes_data[ episodes_list[i] ] %>
+        <h2><a href="<%- base_url %><%- episode.urlencoded_title %>.html"><%= episode.title %></a></h2>
+        <img src="<%- base_url %><%- episode.urlencoded_title %>.jpg" />
+        <%- episode.summary %>
+      <% end %>
     <% end %>
   </div>
   </body>
@@ -244,7 +248,7 @@ local function delete_episode(episode_title)
     os.execute("mv " .. ("docs/" .. episode.file_name .. ".mp3"):enquote() .. " .trash/")
     os.execute("mv " .. ("docs/" .. episode.file_name .. ".jpg"):enquote() .. " .trash/")
     os.execute("mv " .. ("docs/" .. episode.file_name .. ".html"):enquote() .. " .trash/")
-    generate_feed(database)
+    generate_everything(database)
   else
     os.execute("mv " .. (episode.file_name .. ".mp3"):enquote() .. " .trash/")
     os.execute("mv " .. (episode.file_name .. ".jpg"):enquote() .. " .trash/")
