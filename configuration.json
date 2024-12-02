@@ -1,1 +1,14 @@
-{"categories":{"Technology":true},"description":"The default/example podcast of github.io-podcasts!","timezone_offset":-7,"title":"A GitHub.io Podcast","episodes_list":["This #Title Contains @Special Characters and a looong title for testing purposes!"],"explicit":false,"episodes_data":{"This #Title Contains @Special Characters and a looong title for testing purposes!":{"duration_seconds":9,"guid":"0d2f4e33-40dc-49a2-a475-9ef31a08aafb","urlencoded_title":"This%20%23Title%20Contains%20%40Special%20Characters%20and%20a%20looong%20title%20for%20testing%20purposes%21","episode_number":1,"file_name":"This #Title Contains @Special Characters and a looong title for testing purposes!","published_datetime":"Sun, 01 Dec 2024 14:50:05 GMT","title":"This #Title Contains @Special Characters and a looong title for testing purposes!","file_size":154253,"summary":"There currently isn't a way to specify that this text is supposed to be HTML or not supposed to be HTML. I'm not quite sure how I'll fix that yet. :D\n\nIn the meantime, I added a couple newlines and here's a tag that should be escaped because it shouldn't be here! <img>"}},"language":"en","base_url":"https://tangentfoxy.github.io/github.io-podcasts/"}
+{"categories":{"Technology":true},
+  "description":"The default/example podcast of github.io-podcasts! See https://github.com/TangentFoxy/github.io-podcasts for more information!",
+  "timezone_offset":-7,"title":"github.io-podcasts example podcast",
+  "episodes_list":["This #Title Contains @Special Characters and a looong title for testing purposes!"],
+  "explicit":false,"episodes_data":{
+    "This #Title Contains @Special Characters and a looong title for testing purposes!":{
+      "duration_seconds":9,"guid":"0d2f4e33-40dc-49a2-a475-9ef31a08aafb",
+      "urlencoded_title":"This%20%23Title%20Contains%20%40Special%20Characters%20and%20a%20looong%20title%20for%20testing%20purposes%21",
+      "episode_number":1,"file_name":"This #Title Contains @Special Characters and a looong title for testing purposes!",
+      "published_datetime":"Sun, 01 Dec 2024 14:50:05 GMT",
+      "title":"This #Title Contains @Special Characters and a looong title for testing purposes!",
+      "file_size":154253,"summary":
+      "There currently isn't a way to specify that this text is supposed to be HTML or not supposed to be HTML. I'm not quite sure how I'll fix that yet. :D\n\nIn the meantime, I added a couple newlines and here's a tag that should be escaped because it shouldn't be here! \\<img>"}},
+      "language":"en","base_url":"https://tangentfoxy.github.io/github.io-podcasts/"}
