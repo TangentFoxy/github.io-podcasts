@@ -11,7 +11,7 @@ local function urlencode(url)
   url = url:gsub("\n", "\r\n")
   -- url = url:gsub("([^%w ])", char_to_hex) -- escapes extra characters
   url = url:gsub("([^%w _%%%-%.~])", char_to_hex) -- ignores safe characters according to RFC 3986
-  url = url:gsub(" ", "+")
+  url = url:gsub(" ", "%%20")
   return url
 end
 
@@ -23,7 +23,7 @@ local urldecode = function(url)
   if url == nil then
     return
   end
-  url = url:gsub("+", " ")
+  url = url:gsub("%%20", " ")
   url = url:gsub("%%(%x%x)", hex_to_char)
   return url
 end

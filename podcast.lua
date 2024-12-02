@@ -66,7 +66,7 @@ local utility = require("utility")
 local function load_database()
   local json = require("json")
   local database
-  utility.open("configuration.json", "r", function(file)
+  utility.open("configuration.json", "r")(function(file)
     database = json.decode(file:read("*all"))
   end)
   return database
@@ -74,7 +74,7 @@ end
 
 local function save_database(database)
   local json = require("json")
-  utility.open("configuration.json", "w", function(file)
+  utility.open("configuration.json", "w")(function(file)
     file:write(json.encode(database))
   end)
 end
@@ -99,7 +99,7 @@ local function new_episode(episode_title, file_name, skip_mp3tag) -- skip_descri
   episode.duration_seconds = math.floor(tonumber(duration_seconds))
 
   print("Opening notepad to write episode summary!")
-  os.execute("echo 0>> new_episode.description 1> NULL")
+  os.execute("echo 0>> new_episode.description > NULL")
   os.execute("notepad new_episode.description") -- this is blocking
   utility.open("new_episode.description", "r", function(file)
     episode.summary = file:read("*all")
