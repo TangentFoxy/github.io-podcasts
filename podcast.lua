@@ -149,6 +149,8 @@ local function publish_episode(episode_title)
   local episode = database.episodes_data[episode_title]
   if not episode then error("Episode " .. episode_title:enquote() .. " does not exist.") end
 
+  if episode.episode_number then error("Episode " .. episode_title:enquote() .. " has already been published!") end
+
   local episode_number = #database.episodes_list + 1
   episode.episode_number = episode_number
   episode.file_size = utility.file_size(episode.file_name .. ".mp3")
