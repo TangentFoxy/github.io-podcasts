@@ -48,6 +48,36 @@ local feed_template = [[<?xml version="1.0" encoding="UTF-8"?>
   </rss>
 ]]
 
+local index_page_template = [[<html>
+  <head>
+  <title><%= title %></title>
+  <style>
+    h1, h2 { text-align: center; }
+    audio { display: block; }
+    audio, div { margin: auto; }
+    div, img { width: 512px; }
+    img { height: 256px; object-fit: cover; }
+    #podcast { height: 512px; object-fit: fill; }
+  </style>
+  </head>
+  <body>
+  <div>
+    <p><a href="<%- base_url %>feed.xml">Click here to subscribe!</a></p>
+    <h1><%= title %></h1>
+    <img id="podcast" src="<%- base_url %>podcast.jpg" />
+    <p><%= description %></p>
+    <hr />
+    <% for i = #episodes_list, 1 do %>
+      <% local episode = episodes_data[ episodes_list[i] ] %>
+      <h2><a href="<%- base_url %><%- episode.urlencoded_title %>.html"><%= episode.title %></a></h2>
+      <img src="<%- base_url %><%- episode.urlencoded_title %>.jpg" />
+      <p><%= episode.summary %></p>
+    <% end %>
+  </div>
+  </body>
+  </html>
+]]
+
 local episode_page_template = [[<html>
   <head>
   <title><%= podcast_title .. " - " .. episode_title %></title>
@@ -62,7 +92,6 @@ local episode_page_template = [[<html>
   <div>
     <p><a href="<%- base_url %>">homepage</a></p>
     <h1><%= episode_title %></h1>
-    <br />
     <img src="<%- base_url %><%- urlencoded_title %>.jpg" />
     <audio controls src="<%- base_url %><%- urlencoded_title %>.mp3"></audio>
     <% if escaped_summary then %>
@@ -137,14 +166,50 @@ local function generate_feed(database)
     file:write(feed_content)
   end)
 
-  -- TODO this should also generate index.html!
+  local index_content = etlua.compile(index_page_template)(database)
+  utility.open("docs/index.html", "w")(function(file)
+    file:write(index_content)
+  end)
 
   return true
 end
 
+local function generate_page(database, episode)
+  local etlua = require("etlua")
+
+  local episode_page_content = etlua.compile(episode_page_template)({
+    podcast_title = database.title,
+    episode_title = episode.title,
+    urlencoded_title = episode.urlencoded_title,
+    -- escaped_summary = -- TODO figure this shit out, probably with markdown
+    episode_summary = episode.summary,
+    base_url = database.base_url,
+  })
+  utility.open("docs/" .. episode.file_name .. ".html", "w")(function(file)
+    file:write(episode_page_content)
+  end)
+
+  return true
+end
+
+local function generate_all_pages(database)
+  local etlua = require("etlua")
+
+  for _, episode_title in ipairs(database.episodes_list) do
+    local episode = database.episodes_data[episode_title]
+    generate_page(database, episode)
+  end
+
+  return true
+end
+
+local function generate_everything(database)
+  generate_feed(database)
+  generate_all_pages(database)
+end
+
 local function publish_episode(episode_title)
   local database = load_database()
-  local etlua = require("etlua")
 
   local episode = database.episodes_data[episode_title]
   if not episode then error("Episode " .. episode_title:enquote() .. " does not exist.") end
@@ -162,18 +227,7 @@ local function publish_episode(episode_title)
 
   -- TODO in the future, don't recompile the ENTIRE thing just for adding an episode
   generate_feed(database)
-
-  local episode_page_content = etlua.compile(episode_page_template)({
-    podcast_title = database.title,
-    episode_title = episode.title,
-    urlencoded_title = episode.title,
-    -- escaped_summary = -- TODO figure this shit out, probably with markdown
-    episode_summary = episode.summary,
-    base_url = database.base_url,
-  })
-  utility.open("docs/" .. episode.file_name .. ".html", "w")(function(file)
-    file:write(episode_page_content)
-  end)
+  generate_page(database, episode)
 
   os.execute("mv " .. (episode.file_name .. ".mp3"):enquote() .. " " .. ("docs/" .. episode.file_name .. ".mp3"):enquote())
   os.execute("mv " .. (episode.file_name .. ".jpg"):enquote() .. " " .. ("docs/" .. episode.file_name .. ".jpg"):enquote())
@@ -229,7 +283,7 @@ local function main(arguments)
     publish = publish_episode,
     delete = delete_episode,
     regenerate = function()
-      generate_feed(load_database())
+      generate_everything(load_database())
     end,
   }
   return actions[arguments.action](arguments.title, arguments.file_name)
