@@ -8,6 +8,7 @@ local utility = {}
 
 -- io.open, but errors are immediately thrown, and the file is closed for you
 utility.open = function(file_name, mode, custom_error_message)
+  if type(custom_error_message) == "function" then error("You're using utility.open() wrong.") end
   local file, err = io.open(file_name, mode)
   if not file then error(custom_error_message or err) end
   return function(fn)
