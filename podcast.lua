@@ -70,7 +70,7 @@ local index_page_template = [[<html>
     <%- description %>
     <hr />
     <% if #episodes_list > 0 then %>
-      <% for i = #episodes_list, 1 do %>
+      <% for i = #episodes_list, 1, -1 do %>
         <% local episode = episodes_data[ episodes_list[i] ] %>
         <h2><a href="<%- base_url %><%- episode.urlencoded_title %>.html"><%= episode.title %></a></h2>
         <img src="<%- base_url %><%- episode.urlencoded_title %>.jpg" />
