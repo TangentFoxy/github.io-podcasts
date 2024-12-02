@@ -15,7 +15,7 @@ local feed_template = [=[<?xml version="1.0" encoding="UTF-8"?>
   <channel>
     <title><%= title %></title>
     <link><%- base_url %></link>
-    <description><![CDATA[<%- description %>]]</description>
+    <description><![CDATA[<%- description %>]]></description>
     <language><%= language %></language>
     <itunes:image href="<%- base_url %>podcast.jpg" />
     <% for category, value in pairs(categories) do %>
@@ -36,7 +36,7 @@ local feed_template = [=[<?xml version="1.0" encoding="UTF-8"?>
         <item>
           <title><%= episode.title %></title>
           <link><%- base_url %><%- episode.urlencoded_title %>.html</link>
-          <description><![CDATA[<%- episode.summary %>]]</description>
+          <description><![CDATA[<%- episode.summary %>]]></description>
           <enclosure length="<%= episode.file_size %>" type="audio/mpeg" url="<%- base_url %><%- episode.urlencoded_title %>.mp3" />
           <pubDate><%= episode.published_datetime %></pubDate>
           <guid><%= episode.guid %></guid>
