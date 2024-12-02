@@ -20,6 +20,14 @@ utility.open = function(file_name, mode, custom_error_message)
   end
 end
 
+utility.file_size = function(file_path)
+  local file, err = io.open(file_path, "rb")
+  if err then error(err) end
+  local size = file:seek("end")
+  file:close()
+  return size
+end
+
 -- always uses outputting to a temporary file to guarantee safety
 utility.capture_execute = function(command, tmp_file_name)
   local file_name = tmp_file_name or utility.tmp_file_name()

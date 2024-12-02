@@ -2,21 +2,48 @@
 
 local help = [[Usage:
 
-  to be written
+  podcast.lua <action> <title> [options]
 
 Requirements:
 - ffprobe (part of ffmpeg)
 - mp3tag (optional, for episode artwork)
+- notepad (lol)
 ]]
 
 local feed_template = [[
   <?xml version="1.0" encoding="UTF-8"?>
   <rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"  xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
-    <title><%= podcast_title %></title>
-    <language><%= podcast_language %></language>
-    <% for _, episode in ipairs(episodes) do %>
-      TODO
+    <title><%= title %></title>
+    <link><%- base_url %></link>
+    <description><%= description %></description>
+    <language><%= language %></language>
+    <itunes:image href="<%- base_url %>podcast.jpg" />
+    <% for category, value in pairs(categories) do %>
+      <% if type(value) == "table" then %>
+        <itunes:category text="<%= category %>">
+        <% for subcategory, _ in pairs(value) do %>
+          <itunes:category text="<%= subcategory %>" />
+        <% end %>
+        </itunes:category>
+      <% else %>
+        <itunes:category text="<%= category %>" />
+      <% end %>
+    <% end %>
+    <itunes:explicit><%= tostring(explicit) %></itunes:explicit>
+    <% for _, episode_title in ipairs(episodes_list) do %>
+      <% local episode = episodes_data[episode_title] %>
+      <item>
+        <title><%= episode.title %></title>
+        <link><%- base_url %><%- episode.urlencoded_title %>.html</link>
+        <description><%= episode.summary %></description>
+        <enclosure length="<%= episode.file_size %>" type="audio/mpeg" url="<%- base_url %><%- episode.urlencoded_title %>.mp3" />
+        <pubDate><%= episode.published_datetime %></pubDate>
+        <guid><%= episode.guid %></guid>
+        <itunes:duration><%= episode.duration_seconds %></itunes:duration>
+        <itunes:episode><%= episode.episode_number %></itunes:episode>
+        <itunes:image href="<%- base_url %><%- episode.urlencoded_title %>.jpg" />
+      </item>
     <% end %>
   </channel>
   </rss>
@@ -35,11 +62,11 @@ local episode_page_template = [[
   </head>
   <body>
   <div>
-    <p><a href="/">homepage</a></p>
+    <p><a href="<%- base_url %>">homepage</a></p>
     <h1><%= episode_title %></h1>
     <br />
-    <img src="/<%= urlencoded_title %>.jpg" />
-    <audio controls src="/<%= urlencoded_title %>.mp3"></audio>
+    <img src="<%- base_url %><%= urlencoded_title %>.jpg" />
+    <audio controls src="<%- base_url %><%= urlencoded_title %>.mp3"></audio>
     <% if escaped_summary then %>
       <%- escaped_summary %>
     <% else %>
@@ -49,17 +76,6 @@ local episode_page_template = [[
   </body>
   </html>
 ]]
-
--- local etlua = require("etlua")
--- local page = etlua.compile(episode_page_template)({
---   podcast_title = "",
---   episode_title = "",
---   urlencoded_title = "",
---   escaped_summary = "",
---   episode_summary = "",
--- })
-
-
 
 local utility = require("utility")
 
@@ -79,9 +95,6 @@ local function save_database(database)
   end)
 end
 
--- local function add_episode(title)
--- end
-
 -- starts adding a new episode to the database
 --   some functions require manual intervention, which is why this STARTS the process
 --   MP3 file and JPG file should already exist in the local directory when you run this!
@@ -89,19 +102,22 @@ local function new_episode(episode_title, file_name, skip_mp3tag) -- skip_descri
   local database = load_database()
   local urlencode = require("urlencode")
 
+  -- TODO check if the title already exists and error out if it does
+
   local episode = {
     title = episode_title,
     file_name = file_name or episode_title,
-    urlencoded_title = urlencode(episode_title),
     guid = utility.uuid(),
   }
   local duration_seconds = utility.capture_execute("ffprobe -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 " .. (episode.file_name .. ".mp3"):enquote())
   episode.duration_seconds = math.floor(tonumber(duration_seconds))
+  episode.urlencoded_title = urlencode(episode.file_name) -- NOTE misnomer, should be renamed to urlencoded_file_name
 
   print("Opening notepad to write episode summary!")
   os.execute("echo 0>> new_episode.description > NULL")
+  os.execute("rm NULL") -- fuck you Windows; why the fuck are you creating this file?
   os.execute("notepad new_episode.description") -- this is blocking
-  utility.open("new_episode.description", "r", function(file)
+  utility.open("new_episode.description", "r")(function(file)
     episode.summary = file:read("*all")
   end)
 
@@ -111,12 +127,45 @@ local function new_episode(episode_title, file_name, skip_mp3tag) -- skip_descri
   end
 
   -- return episode
-  database.episodes[episode_title] = episode
+  database.episodes_data[episode_title] = episode
   save_database(database)
-  -- TODO a list of titles will be used for identifying which episode we're on and what was published in what order
+end
+
+local function publish_episode(episode_title)
+  local database = load_database()
+  local etlua = require("etlua")
+
+  local episode = database.episodes_data[episode_title]
+  if not episode then error("Episode " .. episode_title:enquote() .. " does not exist.") end
+
+  local episode_number = #database.episodes_list + 1
+  episode.episode_number = episode_number
+  episode.file_size = utility.file_size((episode.file_name .. ".mp3"):enquote())
+  episode.published_datetime = os.date("%a, %d %b %Y %H:%M:%S GMT", os.time() + database.timezone_offset * 60 * 60)
+
+  database.episodes_list[episode_number] = episode.title
 
   -- NOTE I want to allow truncated summaries
-  -- defer to finishing/publishing: publish_datetime, file_size, episode_number
+
+  -- TODO in the future, don't recompile the ENTIRE thing just for adding an episode
+  local feed_content = etlua.compile(feed_template)(database)
+  utility.open("docs/feed.xml", "w")(function(file)
+    file:write(feed_content)
+  end)
+
+  local episode_page_content = etlua.compile(episode_page_template)({
+    podcast_title = database.title,
+    episode_title = episode.title,
+    urlencoded_title = episode.title,
+    -- escaped_summary = -- TODO figure this shit out, probably with markdown
+    episode_summary = episode.summary,
+    base_url = database.base_url,
+  })
+  utility.open("docs/" .. episode.file_name .. ".html", "w")(function(file)
+    file:write(episode_page_content)
+  end)
+
+  save_database(database)
 end
 
 local function argparse(arguments, positional_arguments)
@@ -145,6 +194,3 @@ end
 local arguments = argparse(arg, {"action", "title", "file_name"})
 if not arguments then return end
 main(arguments)
-
--- local timezone_offset = -7 * 60 * 60 -- for me this is the correct value
--- print(os.date("%a, %d %b %Y %H:%M:%S GMT", os.time() + timezone_offset))

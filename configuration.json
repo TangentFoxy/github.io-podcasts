@@ -1,1 +1,20 @@
-{"language":"en","podcast_title":"A GitHub.io Podcast","episodes":{"This #Title Contains @Special Characters and a looong title for testing purposes!":{"title":"This #Title Contains @Special Characters and a looong title for testing purposes!","guid":"55ac2190-ccb4-46b8-9657-4d4cedb0ea20","urlencoded_title":"This%20%23Title%20Contains%20%40Special%20Characters%20and%20a%20looong%20title%20for%20testing%20purposes%21","duration_seconds":9,"file_name":"This #Title Contains @Special Characters and a looong title for testing purposes!"}},"timezone_offset":-7}
+{"episodes_data":{
+  "This #Title Contains @Special Characters and a looong title for testing purposes!":{
+    "title":"This #Title Contains @Special Characters and a looong title for testing purposes!",
+    "guid":"58f17139-20b9-4058-bf59-17c358f20d2e",
+    "urlencoded_title":"This%20%23Title%20Contains%20%40Special%20Characters%20and%20a%20looong%20title%20for%20testing%20purposes%21",
+    "duration_seconds":9,
+    "file_name":"This #Title Contains @Special Characters and a looong title for testing purposes!"
+  }
+},
+"title":"A GitHub.io Podcast",
+"language":"en",
+"timezone_offset":-7,
+"episodes_list":[],
+"categories":{
+  "Technology": true
+},
+"base_url":"https://tangentfoxy.github.io/github.io-podcasts/",
+"description":"The default/example podcast of github.io-podcasts!",
+"explicit":false
+}
