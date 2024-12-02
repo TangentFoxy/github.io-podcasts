@@ -1,0 +1,32 @@
+  <?xml version="1.0" encoding="UTF-8"?>
+  <rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"  xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>A GitHub.io Podcast</title>
+    <link>https://tangentfoxy.github.io/github.io-podcasts/</link>
+    <description>The default/example podcast of github.io-podcasts!</description>
+    <language>en</language>
+    <itunes:image href="https://tangentfoxy.github.io/github.io-podcasts/podcast.jpg" />
+    
+      
+        <itunes:category text="Technology" />
+      
+    
+    <itunes:explicit>false</itunes:explicit>
+    
+      
+      <item>
+        <title>This #Title Contains @Special Characters and a looong title for testing purposes!</title>
+        <link>https://tangentfoxy.github.io/github.io-podcasts/This%20%23Title%20Contains%20%40Special%20Characters%20and%20a%20looong%20title%20for%20testing%20purposes%21.html</link>
+        <description>There currently isn&#039;t a way to specify that this text is supposed to be HTML or not supposed to be HTML. I&#039;m not quite sure how I&#039;ll fix that yet. :D
+
+In the meantime, I added a couple newlines and here&#039;s a tag that should be escaped because it shouldn&#039;t be here! &lt;img&gt;</description>
+        <enclosure length="154253" type="audio/mpeg" url="https://tangentfoxy.github.io/github.io-podcasts/This%20%23Title%20Contains%20%40Special%20Characters%20and%20a%20looong%20title%20for%20testing%20purposes%21.mp3" />
+        <pubDate>Sun, 01 Dec 2024 14:17:50 GMT</pubDate>
+        <guid>cbe7f6b6-cead-4ced-901d-d8e1bd4d8a89</guid>
+        <itunes:duration>9</itunes:duration>
+        <itunes:episode>1</itunes:episode>
+        <itunes:image href="https://tangentfoxy.github.io/github.io-podcasts/This%20%23Title%20Contains%20%40Special%20Characters%20and%20a%20looong%20title%20for%20testing%20purposes%21.jpg" />
+      </item>
+    
+  </channel>
+  </rss>
