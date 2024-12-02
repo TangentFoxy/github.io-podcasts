@@ -15,7 +15,7 @@ local feed_template = [=[<?xml version="1.0" encoding="UTF-8"?>
   <channel>
     <title><%= title %></title>
     <link><%- base_url %></link>
-    <description><%= description %></description>
+    <description><![CDATA[<%- description %>]]</description>
     <language><%= language %></language>
     <itunes:image href="<%- base_url %>podcast.jpg" />
     <% for category, value in pairs(categories) do %>
@@ -67,7 +67,7 @@ local index_page_template = [[<html>
     <p><a href="<%- base_url %>feed.xml">Click here to subscribe!</a></p>
     <h1><%= title %></h1>
     <img id="podcast" src="<%- base_url %>podcast.jpg" />
-    <p><%= description %></p>
+    <%- description %>
     <hr />
     <% if #episodes_list > 0 then %>
       <% for i = #episodes_list, 1 do %>
