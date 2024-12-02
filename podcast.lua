@@ -10,8 +10,7 @@ Requirements:
 - notepad (lol)
 ]]
 
-local feed_template = [[
-  <?xml version="1.0" encoding="UTF-8"?>
+local feed_template = [[<?xml version="1.0" encoding="UTF-8"?>
   <rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"  xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title><%= title %></title>
@@ -49,8 +48,7 @@ local feed_template = [[
   </rss>
 ]]
 
-local episode_page_template = [[
-  <html>
+local episode_page_template = [[<html>
   <head>
   <title><%= podcast_title .. " - " .. episode_title %></title>
   <style>
@@ -228,6 +226,9 @@ local function main(arguments)
     new = new_episode,
     publish = publish_episode,
     delete = delete_episode,
+    regenerate = function()
+      generate_feed(load_database())
+    end,
   }
   return actions[arguments.action](arguments.title, arguments.file_name)
 end
