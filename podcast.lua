@@ -63,8 +63,8 @@ local episode_page_template = [[<html>
     <p><a href="<%- base_url %>">homepage</a></p>
     <h1><%= episode_title %></h1>
     <br />
-    <img src="<%- base_url %><%= urlencoded_title %>.jpg" />
-    <audio controls src="<%- base_url %><%= urlencoded_title %>.mp3"></audio>
+    <img src="<%- base_url %><%- urlencoded_title %>.jpg" />
+    <audio controls src="<%- base_url %><%- urlencoded_title %>.mp3"></audio>
     <% if escaped_summary then %>
       <%- escaped_summary %>
     <% else %>
@@ -148,6 +148,8 @@ local function publish_episode(episode_title)
 
   local episode = database.episodes_data[episode_title]
   if not episode then error("Episode " .. episode_title:enquote() .. " does not exist.") end
+
+  if episode.episode_number then error("Episode " .. episode_title:enquote() .. " has already been published!") end
 
   local episode_number = #database.episodes_list + 1
   episode.episode_number = episode_number
