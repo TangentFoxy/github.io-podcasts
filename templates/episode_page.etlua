@@ -1,0 +1,20 @@
+<html>
+<head>
+<title><%= podcast_title .. " - " .. episode_title %></title>
+<style>
+  h1 { text-align: center; }
+  audio { display: block; }
+  audio, div { margin: auto; }
+  div, img { width: 512px; }
+</style>
+</head>
+<body>
+<div>
+  <p><a href="<%- base_url %>">homepage</a></p>
+  <h1><%= episode_title %></h1>
+  <img src="<%- base_url %><%- urlencoded_title %>.jpg" />
+  <audio controls src="<%- base_url %><%- urlencoded_title %>.mp3"></audio>
+  <%- episode_summary %>
+</div>
+</body>
+</html>

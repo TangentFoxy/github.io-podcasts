@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"  xmlns:content="http://purl.org/rss/1.0/modules/content/">
+<channel>
+  <title><%= title %></title>
+  <link><%- base_url %></link>
+  <description><![CDATA[<%- description %>]]></description>
+  <language><%= language %></language>
+  <itunes:image href="<%- base_url %>podcast.jpg" />
+  <% for category, value in pairs(categories) do %>
+    <% if type(value) == "table" then %>
+      <itunes:category text="<%= category %>">
+      <% for subcategory, _ in pairs(value) do %>
+        <itunes:category text="<%= subcategory %>" />
+      <% end %>
+      </itunes:category>
+    <% else %>
+      <itunes:category text="<%= category %>" />
+    <% end %>
+  <% end %>
+  <itunes:explicit><%= tostring(explicit) %></itunes:explicit>
+  <% if #episodes_list > 0 then %>
+    <% for _, episode_title in ipairs(episodes_list) do %>
+      <% local episode = episodes_data[episode_title] %>
+      <item>
+        <title><%= episode.title %></title>
+        <link><%- base_url %><%- episode.urlencoded_title %>.html</link>
+        <description><![CDATA[<%- episode.summary %>]]></description>
+        <enclosure length="<%= episode.file_size %>" type="audio/mpeg" url="<%- base_url %><%- episode.urlencoded_title %>.mp3" />
+        <pubDate><%= episode.published_datetime %></pubDate>
+        <guid><%= episode.guid %></guid>
+        <itunes:duration><%= episode.duration_seconds %></itunes:duration>
+        <itunes:episode><%= episode.episode_number %></itunes:episode>
+        <itunes:image href="<%- base_url %><%- episode.urlencoded_title %>.jpg" />
+      </item>
+    <% end %>
+  <% end %>
+</channel>
+</rss>

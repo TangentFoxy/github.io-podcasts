@@ -26,100 +26,6 @@ Requirements:
 - notepad (lol)
 ]]
 
-local feed_template = [=[<?xml version="1.0" encoding="UTF-8"?>
-  <rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"  xmlns:content="http://purl.org/rss/1.0/modules/content/">
-  <channel>
-    <title><%= title %></title>
-    <link><%- base_url %></link>
-    <description><![CDATA[<%- description %>]]></description>
-    <language><%= language %></language>
-    <itunes:image href="<%- base_url %>podcast.jpg" />
-    <% for category, value in pairs(categories) do %>
-      <% if type(value) == "table" then %>
-        <itunes:category text="<%= category %>">
-        <% for subcategory, _ in pairs(value) do %>
-          <itunes:category text="<%= subcategory %>" />
-        <% end %>
-        </itunes:category>
-      <% else %>
-        <itunes:category text="<%= category %>" />
-      <% end %>
-    <% end %>
-    <itunes:explicit><%= tostring(explicit) %></itunes:explicit>
-    <% if #episodes_list > 0 then %>
-      <% for _, episode_title in ipairs(episodes_list) do %>
-        <% local episode = episodes_data[episode_title] %>
-        <item>
-          <title><%= episode.title %></title>
-          <link><%- base_url %><%- episode.urlencoded_title %>.html</link>
-          <description><![CDATA[<%- episode.summary %>]]></description>
-          <enclosure length="<%= episode.file_size %>" type="audio/mpeg" url="<%- base_url %><%- episode.urlencoded_title %>.mp3" />
-          <pubDate><%= episode.published_datetime %></pubDate>
-          <guid><%= episode.guid %></guid>
-          <itunes:duration><%= episode.duration_seconds %></itunes:duration>
-          <itunes:episode><%= episode.episode_number %></itunes:episode>
-          <itunes:image href="<%- base_url %><%- episode.urlencoded_title %>.jpg" />
-        </item>
-      <% end %>
-    <% end %>
-  </channel>
-  </rss>
-]=]
-
-local index_page_template = [[<html>
-  <head>
-  <title><%= title %></title>
-  <style>
-    h1, h2 { text-align: center; }
-    audio { display: block; }
-    audio, div { margin: auto; }
-    div, img { width: 512px; }
-    img { height: 256px; object-fit: cover; }
-    #podcast { height: 512px; object-fit: fill; }
-  </style>
-  </head>
-  <body>
-  <div>
-    <p><a href="<%- base_url %>feed.xml">Click here to subscribe!</a></p>
-    <h1><%= title %></h1>
-    <img id="podcast" src="<%- base_url %>podcast.jpg" />
-    <%- description %>
-    <hr />
-    <% if #episodes_list > 0 then %>
-      <% for i = #episodes_list, 1, -1 do %>
-        <% local episode = episodes_data[ episodes_list[i] ] %>
-        <h2><a href="<%- base_url %><%- episode.urlencoded_title %>.html"><%= episode.title %></a></h2>
-        <img src="<%- base_url %><%- episode.urlencoded_title %>.jpg" />
-        <%- episode.summary %>
-      <% end %>
-    <% end %>
-  </div>
-  </body>
-  </html>
-]]
-
-local episode_page_template = [[<html>
-  <head>
-  <title><%= podcast_title .. " - " .. episode_title %></title>
-  <style>
-    h1 { text-align: center; }
-    audio { display: block; }
-    audio, div { margin: auto; }
-    div, img { width: 512px; }
-  </style>
-  </head>
-  <body>
-  <div>
-    <p><a href="<%- base_url %>">homepage</a></p>
-    <h1><%= episode_title %></h1>
-    <img src="<%- base_url %><%- urlencoded_title %>.jpg" />
-    <audio controls src="<%- base_url %><%- urlencoded_title %>.mp3"></audio>
-    <%- episode_summary %>
-  </div>
-  </body>
-  </html>
-]]
-
 local utility = require("lib.utility")
 
 local function load_database()
@@ -178,9 +84,19 @@ end
 local function generate_feed(database)
   local etlua = require("lib.etlua")
 
+  local feed_template
+  utility.open("templates/feed.etlua", "r")(function(file)
+    feed_template = file:read("*all")
+  end)
+
   local feed_content = etlua.compile(feed_template)(database)
   utility.open("docs/feed.xml", "w")(function(file)
     file:write(feed_content)
+  end)
+
+  local index_page_template
+  utility.open("templates/index_page.etlua", "r")(function(file)
+    index_page_template = file:read("*all")
   end)
 
   local index_content = etlua.compile(index_page_template)(database)
@@ -193,6 +109,11 @@ end
 
 local function generate_page(database, episode)
   local etlua = require("lib.etlua")
+
+  local episode_page_template
+  utility.open("templates/episode_page.etlua", "r")(function(file)
+    episode_page_template = file:read("*all")
+  end)
 
   local episode_page_content = etlua.compile(episode_page_template)({
     podcast_title = database.title,
