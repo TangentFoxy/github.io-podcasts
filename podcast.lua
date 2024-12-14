@@ -19,6 +19,7 @@ local help = [[Usage:
               accidental removal.
   regenerate: In case of template changes or unpublished changes to database,
               this regenerates every page (and feed).
+  metadata:   Prints podcast metadata.
 
 Requirements:
 - ffprobe (part of ffmpeg)
@@ -157,6 +158,7 @@ local function publish_episode(episode_title)
   if episode.episode_number then error("Episode " .. episode_title:enquote() .. " has already been published!") end
 
   local episode_number = database.next_episode_number or 1
+  database.next_episode_number = episode_number + 1
   episode.episode_number = episode_number
   episode.file_size = utility.file_size(episode.file_name .. ".mp3")
   episode.published_datetime = os.date("%a, %d %b %Y %H:%M:%S GMT", os.time() - database.timezone_offset * 60 * 60)
