@@ -73,3 +73,4 @@ Usage:
 - `episodes_list`: *Should* be an array, listing episodes in order by title. (In
   Lua, arrays/objects are interchangeable. If you ever delete an episode, this
   will turn into an object addressed by integers instead of being an array.)
+- `next_episode_number`: Integer. To handle possibility of missing episodes.

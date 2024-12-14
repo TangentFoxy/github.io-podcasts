@@ -18,7 +18,14 @@
   <%- description %>
   <hr />
   <% if #episodes_list > 0 then %>
-    <% for i = #episodes_list, 1, -1 do %>
+    <%
+      local order = {}
+      for n in pairs(episodes_list) do
+        table.insert(order, n)
+      end
+      table.sort(order, function(a,b) return a > b end)
+    %>
+    <% for _, i in ipairs(order) do %>
       <% local episode = episodes_data[ episodes_list[i] ] %>
       <h2><a href="<%- base_url %><%- episode.urlencoded_title %>.html"><%= episode.title %></a></h2>
       <img src="<%- base_url %><%- episode.urlencoded_title %>.jpg" />

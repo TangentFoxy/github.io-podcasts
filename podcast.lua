@@ -34,6 +34,9 @@ local function load_database()
   utility.open("configuration.json", "r")(function(file)
     database = json.decode(file:read("*all"))
   end)
+  if not database.next_episode_number then -- addresses #20 episode numbering can have missing items
+    database.next_episode_number = #database.episodes_list + 1
+  end
   return database
 end
 
@@ -132,8 +135,7 @@ end
 local function generate_all_pages(database)
   local etlua = require("lib.etlua")
 
-  -- BUG this should allow gaps to exist, and doesn't need to be done in order!
-  for _, episode_title in ipairs(database.episodes_list) do
+  for _, episode_title in pairs(database.episodes_list) do
     local episode = database.episodes_data[episode_title]
     generate_page(database, episode)
   end
@@ -154,7 +156,7 @@ local function publish_episode(episode_title)
 
   if episode.episode_number then error("Episode " .. episode_title:enquote() .. " has already been published!") end
 
-  local episode_number = #database.episodes_list + 1 -- BUG this needs to be stored manually instead of assuming the next slot is available
+  local episode_number = database.next_episode_number or 1
   episode.episode_number = episode_number
   episode.file_size = utility.file_size(episode.file_name .. ".mp3")
   episode.published_datetime = os.date("%a, %d %b %Y %H:%M:%S GMT", os.time() - database.timezone_offset * 60 * 60)
@@ -184,7 +186,7 @@ local function delete_episode(episode_title)
   os.execute("mkdir .trash")
 
   if episode.episode_number then
-    table.remove(database.episodes_list, episode.episode_number) -- BUG this renumbers things without updating their metadata - and is also just a bad thing to do!
+    database.episodes_list[episode.episode_number] = nil
     os.execute("mv " .. ("docs/" .. episode.file_name .. ".mp3"):enquote() .. " .trash/")
     os.execute("mv " .. ("docs/" .. episode.file_name .. ".jpg"):enquote() .. " .trash/")
     os.execute("mv " .. ("docs/" .. episode.file_name .. ".html"):enquote() .. " .trash/")
