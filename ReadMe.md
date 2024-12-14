@@ -39,5 +39,5 @@ Usage:
 - notepad (if you don't have this, what did you *do*?)
 
 ## configuration.json
-- `base_url` must be already URL-escaped (if necessary), and must end in a `/`.
+- `base_url` must be already URL-escaped (if necessary), and must end in a `/`.  
 - `description` must be valid HTML.
