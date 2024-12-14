@@ -4,6 +4,22 @@ local help = [[Usage:
 
   podcast.lua <action> <title> [options]
 
+<action>:
+  new:        Starts the process of adding a new episode. An MP3 file should be
+              placed in the root of the repo, next to this script. The file name
+              should match the title. If it doesn't, specify the file name as an
+              extra argument. If episode artwork is included, it should have the
+              same name as the MP3 file, be in JPEG format, and end in ".jpg".
+              Notepad will be opened to write the episode description. It will
+              be converted to HTML from Markdown.
+  publish:    Finishes adding a new episode and publishes it immediately as the
+              next episode. (Does not commit and push YET, you must do so.)
+  delete:     Deletes an episode. If it was published, then regenerate is run as
+              well. Files are moved to a ".trash" folder locally in case of
+              accidental removal.
+  regenerate: In case of template changes or unpublished changes to database,
+              this regenerates every page (and feed).
+
 Requirements:
 - ffprobe (part of ffmpeg)
 - mp3tag (optional, for episode artwork)
@@ -130,7 +146,7 @@ local function new_episode(episode_title, file_name, skip_mp3tag) -- skip_descri
   local urlencode = require("lib.urlencode")
   local markdown = require("lib.markdown")
 
-  -- TODO check if the title already exists and error out if it does
+  assert(not database.episodes_data[episode_title], "An episode with that title already exists.")
 
   local episode = {
     title = episode_title,
@@ -139,14 +155,14 @@ local function new_episode(episode_title, file_name, skip_mp3tag) -- skip_descri
   }
   local duration_seconds = utility.capture_execute("ffprobe -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 " .. (episode.file_name .. ".mp3"):enquote())
   episode.duration_seconds = math.floor(tonumber(duration_seconds))
-  episode.urlencoded_title = urlencode(episode.file_name) -- NOTE misnomer, should be renamed to urlencoded_file_name
+  episode.urlencoded_title = urlencode(episode.file_name) -- NOTE misnomer, should be renamed to urlencoded_file_name_without_extension
 
   print("Opening notepad to write episode summary!")
-  os.execute("echo 0>> new_episode.description > NULL")
-  os.execute("rm NULL") -- fuck you Windows; why the fuck are you creating this file?
+  os.execute("echo 0>> new_episode.description > NUL")
+  -- utility.open("new_episode.description", "w")(function(file) file:write("") end) -- the previous description being left in-place is a feature, not a bug
   os.execute("notepad new_episode.description") -- this is blocking
   utility.open("new_episode.description", "r")(function(file)
-    episode.summary = markdown(file:read("*all"))
+    episode.summary = markdown(file:read("*all"))  --TODO save markdown, and process only when building pages
   end)
 
   if not skip_mp3tag then
@@ -233,6 +249,8 @@ local function publish_episode(episode_title)
   os.execute("mv " .. (episode.file_name .. ".jpg"):enquote() .. " " .. ("docs/" .. episode.file_name .. ".jpg"):enquote())
 
   save_database(database)
+
+  -- TODO commit and push!
 end
 
 local function delete_episode(episode_title)
