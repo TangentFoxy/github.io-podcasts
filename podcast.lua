@@ -205,6 +205,19 @@ local function delete_episode(episode_title)
   save_database(database)
 end
 
+local function print_metadata()
+  local database = load_database()
+  database.episodes_data = nil
+  database.episodes_list = nil
+
+  local output = {}
+  for k, v in pairs(database) do
+    table.insert(output, tostring(k) .. " = " .. tostring(v))
+  end
+
+  print(table.concat(output, "\n"))
+end
+
 local function argparse(arguments, positional_arguments)
   local recognized_arguments = {}
   for index, argument in ipairs(arguments) do
@@ -229,8 +242,13 @@ local function main(arguments)
     regenerate = function()
       generate_everything(load_database())
     end,
+    metadata = print_metadata,
   }
-  return actions[arguments.action](arguments.title, arguments.file_name)
+  if actions[arguments.action] then
+    return actions[arguments.action](arguments.title, arguments.file_name)
+  else
+    error("Invalid <action>.")
+  end
 end
 
 local arguments = argparse(arg, {"action", "title", "file_name"})
