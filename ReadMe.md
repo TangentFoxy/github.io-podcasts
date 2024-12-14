@@ -39,5 +39,37 @@ Usage:
 - notepad (if you don't have this, what did you *do*?)
 
 ## configuration.json
-- `base_url` must be already URL-escaped (if necessary), and must end in a `/`.  
-- `description` must be valid HTML.
+- `title`: Podcast title.
+- `base_url`: Podcast URL. Must be already URL-escaped (if necessary), and must
+  end in a `/`. (This is where the index page should be accessible.)
+- `description`: Podcast description. Must be valid HTML.
+- `timezone_offset`: Number. Local timezone offset, so that publication times
+  are correct. (This script cannot handle DST.)
+- `language`: String. A two-letter language identification code.
+- `explicit`: true or false
+- `categories`: An object analogous to the standard categories. Example:
+  ```json
+  {
+    "categories": {
+      "Technology": true,
+      "Society & Culture": {
+        "Personal Journals": true
+      }
+    }
+  }
+  ```
+
+- `episodes_data`: Episode metadata, addressed by episode title. Every episode has:
+  - `title`: String.
+  - `file_name`: String. **Excludes file extension.**
+  - `duration_seconds`: Integer. Episode length/duration in seconds.
+  - `urelencoded_title`: String. URL-encoded file name, **excluding extension**.
+  - `summary`: String. HTML. Description of episode. Placed directly in feed and site.
+  - `guid`: String. Generated UUIDv4 when `new` is called. (Must not change.)
+  - `episode_number`: Integer. Only on published episodes.
+  - `file_size`: Integer. Only on published episodes. File size in bytes.
+  - `published_datetime`: String. Formatted as required for podcast publication.
+
+- `episodes_list`: *Should* be an array, listing episodes in order by title. (In
+  Lua, arrays/objects are interchangeable. If you ever delete an episode, this
+  will turn into an object addressed by integers instead of being an array.)
