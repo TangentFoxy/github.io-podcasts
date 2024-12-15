@@ -64,6 +64,8 @@ Usage:
     }
   }
   ```
+- `scheduled_episodes`: Object of UNIX timestamps and episode titles for
+  automatic scheduling of episode publication.
 
 - `episodes_data`: Episode metadata, addressed by episode title. Every episode has:
   - `title`: String.

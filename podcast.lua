@@ -217,13 +217,7 @@ local function print_metadata()
   local database = load_database()
   database.episodes_data = nil
   database.episodes_list = nil
-
-  local output = {}
-  for k, v in pairs(database) do
-    table.insert(output, tostring(k) .. " = " .. tostring(v))
-  end
-
-  print(table.concat(output, "\n"))
+  utility.print_table(database)
 end
 
 local function schedule(episode_title, datetime)
@@ -239,7 +233,6 @@ local function schedule(episode_title, datetime)
   local y, m, d = datetime:getdate()
   local h, s = datetime:gettime()
   local unix_timestamp = os.time({ year = y, month = m, day = d, hour = h, min = m })
-  print(y, m, d, h, s, unix_timestamp, episode_title)
   database.scheduled_episodes[tostring(unix_timestamp)] = episode_title
 
   save_database(database)
