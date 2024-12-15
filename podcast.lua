@@ -48,8 +48,9 @@ end
 
 local function save_database(database)
   local json = require("lib.json")
+  local encoded_json = json.encode(database)
   utility.open("configuration.json", "w")(function(file)
-    file:write(json.encode(database))
+    file:write(encoded_json)
   end)
 end
 
@@ -238,6 +239,7 @@ local function schedule(episode_title, datetime)
   local y, m, d = datetime:getdate()
   local h, s = datetime:gettime()
   local unix_timestamp = os.time({ year = y, month = m, day = d, hour = h, min = m })
+  print(y, m, d, h, s, unix_timestamp, episode_title)
   database.scheduled_episodes[unix_timestamp] = episode_title
 
   save_database(database)
