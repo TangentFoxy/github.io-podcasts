@@ -32,6 +32,11 @@ Usage:
   regenerate: In case of template changes or unpublished changes to database,
               this regenerates every page (and feed).
   metadata:   Prints podcast metadata.
+  schedule:   Schedules an episode to be published automatically. Requires
+              "podcast.lua scheduler" running in the background. LuaDate is used
+              to handle a variety of datetime formats automatically.
+  scheduler:  Checks every minute for when an episode should be published, and
+              publishes when necessary.
 ```
 
 ### Requirements

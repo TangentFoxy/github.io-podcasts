@@ -20,6 +20,11 @@ local help = [[Usage:
   regenerate: In case of template changes or unpublished changes to database,
               this regenerates every page (and feed).
   metadata:   Prints podcast metadata.
+  schedule:   Schedules an episode to be published automatically. Requires
+              "podcast.lua scheduler" running in the background. LuaDate is used
+              to handle a variety of datetime formats automatically.
+  scheduler:  Checks every minute for when an episode should be published, and
+              publishes when necessary.
 
 Requirements:
 - ffprobe (part of ffmpeg)
@@ -153,9 +158,8 @@ local function publish_episode(episode_title)
   local database = load_database()
 
   local episode = database.episodes_data[episode_title]
-  if not episode then error("Episode " .. episode_title:enquote() .. " does not exist.") end
-
-  if episode.episode_number then error("Episode " .. episode_title:enquote() .. " has already been published!") end
+  assert(episode, "Episode " .. episode_title:enquote() .. " does not exist.")
+  assert(not episode.episode_number, "Episode" .. episode_title:enquote() .. " has already been published!")
 
   local episode_number = database.next_episode_number or 1
   database.next_episode_number = episode_number + 1
@@ -176,14 +180,17 @@ local function publish_episode(episode_title)
 
   save_database(database)
 
-  -- TODO commit and push!
+  os.execute("git add *")
+  os.execute("git commit -m " .. ("published episode " .. episode.episode_number):enquote())
+  os.execute("git pull origin")
+  os.execute("git push origin")
 end
 
 local function delete_episode(episode_title)
   local database = load_database()
 
   local episode = database.episodes_data[episode_title]
-  if not episode then error("Episode " .. episode_title:enquote() .. " does not exist.") end
+  assert(episode, "Episode " .. episode_title:enquote() .. " does not exist.")
 
   os.execute("mkdir .trash")
 
@@ -218,29 +225,43 @@ local function print_metadata()
   print(table.concat(output, "\n"))
 end
 
-local function schedule(a, b)
-  -- TEMP testing scheduled tasks
-  -- os.date("%a, %d %b %Y %H:%M:%S GMT", os.time() - database.timezone_offset * 60 * 60)
-  if a == "scheduled" then
-    os.execute("touch scheduled" .. tostring(math.random()))
-    os.execute("sleep 5")
-  else
-    local path = (arg[0]:match("@?(.*/)") or arg[0]:match("@?(.*\\)"))
-    local command = {
-      "schtasks /create /sc ONCE",
-      "/tn", tostring(math.random()), -- must be unique task name
-      "/tr", ("lua " .. path .. "podcast.lua schedule scheduled"):enquote(), -- actual command
-      "/st", os.date("%H:%M", os.time() + 60), -- one minute in the future
-      -- "/np", -- non-interactive, /z can't be used as documentation states
-      "/rl LIMITED", "/it",
-    }
-    local query = table.concat(command, " ")
-    print(query)
-    os.execute(query)
-  end
+local function schedule(episode_title, datetime)
+  local date = require("lib.date")
+  local database = load_database()
 
-  -- the Windows task scheduler does not work as documented and I am not wasting any more time trying to make it work now
-  --  this commit exists only for reference
+  local episode = database.episodes_data[episode_title]
+  assert(episode, "Episode " .. episode_title:enquote() .. " does not exist.")
+  assert(not episode.episode_number, "Episode" .. episode_title:enquote() .. " has already been published!")
+
+  if not database.scheduled_episodes then database.scheduled_episodes = {} end
+  datetime = date(datetime)
+  local y, m, d = datetime:getdate()
+  local h, s = datetime:gettime()
+  local unix_timestamp = os.time({ year = y, month = m, day = d, hour = h, min = m })
+  database.scheduled_episodes[unix_timestamp] = episode_title
+
+  save_database(database)
+  print("(In order for scheduling to work, an instance of " .. ("podcast.lua scheduler"):enquote() .. " must be running.)")
+end
+
+-- Windows' task scheduler is inadequate for my needs, checking every minute for a scheduled task and running it will be more effective
+local function infinite_loop()
+  while true do
+    local now = os.time()
+    print(os.date("%H:%M", now) .. " Checking schedule...")
+    local database = load_database()
+    if database.scheduled_episodes then
+      for unix_timestamp, episode_title in pairs(database.scheduled_episodes) do
+        if now >= unix_timestamp then
+          publish_episode(episode_title)
+          database.scheduled_episodes[unix_timestamp] = nil
+          save_database(database)
+          break
+        end
+      end
+    end
+    os.execute("sleep 60")
+  end
 end
 
 local function argparse(arguments, positional_arguments)
@@ -269,6 +290,7 @@ local function main(arguments)
     end,
     metadata = print_metadata,
     schedule = schedule,
+    scheduler = infinite_loop,
   }
   if actions[arguments.action] then
     return actions[arguments.action](arguments.title, arguments.file_name)
