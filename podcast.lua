@@ -218,6 +218,31 @@ local function print_metadata()
   print(table.concat(output, "\n"))
 end
 
+local function schedule(a, b)
+  -- TEMP testing scheduled tasks
+  -- os.date("%a, %d %b %Y %H:%M:%S GMT", os.time() - database.timezone_offset * 60 * 60)
+  if a == "scheduled" then
+    os.execute("touch scheduled" .. tostring(math.random()))
+    os.execute("sleep 5")
+  else
+    local path = (arg[0]:match("@?(.*/)") or arg[0]:match("@?(.*\\)"))
+    local command = {
+      "schtasks /create /sc ONCE",
+      "/tn", tostring(math.random()), -- must be unique task name
+      "/tr", ("lua " .. path .. "podcast.lua schedule scheduled"):enquote(), -- actual command
+      "/st", os.date("%H:%M", os.time() + 60), -- one minute in the future
+      -- "/np", -- non-interactive, /z can't be used as documentation states
+      "/rl LIMITED", "/it",
+    }
+    local query = table.concat(command, " ")
+    print(query)
+    os.execute(query)
+  end
+
+  -- the Windows task scheduler does not work as documented and I am not wasting any more time trying to make it work now
+  --  this commit exists only for reference
+end
+
 local function argparse(arguments, positional_arguments)
   local recognized_arguments = {}
   for index, argument in ipairs(arguments) do
@@ -243,6 +268,7 @@ local function main(arguments)
       generate_everything(load_database())
     end,
     metadata = print_metadata,
+    schedule = schedule,
   }
   if actions[arguments.action] then
     return actions[arguments.action](arguments.title, arguments.file_name)
