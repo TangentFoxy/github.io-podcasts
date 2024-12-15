@@ -32,6 +32,22 @@
         <itunes:image href="https://tangentfoxy.github.io/github.io-podcasts/This%20%23Title%20Contains%20%40Special%20Characters%20and%20a%20looong%20title%20for%20testing%20purposes%21.jpg" />
       </item>
     
+      
+      <item>
+        <title>Testing scheduled publication</title>
+        <link>https://tangentfoxy.github.io/github.io-podcasts/Testing%20scheduled%20publication.html</link>
+        <description><![CDATA[
+<p>I added a few new commands and I have no idea how well this will work but I am excited to try it!</p>
+
+]]></description>
+        <enclosure length="76603" type="audio/mpeg" url="https://tangentfoxy.github.io/github.io-podcasts/Testing%20scheduled%20publication.mp3" />
+        <pubDate>Sun, 15 Dec 2024 02:20:15 GMT</pubDate>
+        <guid>070d1f9a-b834-461b-9aa0-2432cf105eef</guid>
+        <itunes:duration>6</itunes:duration>
+        <itunes:episode>2</itunes:episode>
+        <itunes:image href="https://tangentfoxy.github.io/github.io-podcasts/Testing%20scheduled%20publication.jpg" />
+      </item>
+    
   
 </channel>
 </rss>

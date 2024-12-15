@@ -240,7 +240,7 @@ local function schedule(episode_title, datetime)
   local h, s = datetime:gettime()
   local unix_timestamp = os.time({ year = y, month = m, day = d, hour = h, min = m })
   print(y, m, d, h, s, unix_timestamp, episode_title)
-  database.scheduled_episodes[unix_timestamp] = episode_title
+  database.scheduled_episodes[tostring(unix_timestamp)] = episode_title
 
   save_database(database)
   print("(In order for scheduling to work, an instance of " .. ("podcast.lua scheduler"):enquote() .. " must be running.)")
@@ -254,7 +254,7 @@ local function infinite_loop()
     local database = load_database()
     if database.scheduled_episodes then
       for unix_timestamp, episode_title in pairs(database.scheduled_episodes) do
-        if now >= unix_timestamp then
+        if now >= tonumber(unix_timestamp) then
           publish_episode(episode_title)
           database.scheduled_episodes[unix_timestamp] = nil
           save_database(database)
