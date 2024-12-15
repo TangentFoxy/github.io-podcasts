@@ -22,11 +22,9 @@ utility.open = function(file_name, mode, custom_error_message)
 end
 
 utility.file_size = function(file_path)
-  local file, err = io.open(file_path, "rb")
-  if err then error(err) end
-  local size = file:seek("end")
-  file:close()
-  return size
+  return utility.open(file_path, "rb")(function(file)
+    return file:seek("end")
+  end)
 end
 
 -- always uses outputting to a temporary file to guarantee safety
@@ -53,6 +51,16 @@ end
 
 utility.tmp_file_name = function()
   return "." .. utility.uuid() .. ".tmp"
+end
+
+utility.print_table = function(tab, current_depth)
+  if not current_depth then current_depth = 0 end
+  for key, value in pairs(tab) do
+    print(string.rep(" ", current_depth) .. tostring(key) .. " = " .. tostring(value))
+    if type(value) == "table" then
+      utility.print_table(value, current_depth + 2)
+    end
+  end
 end
 
 return utility

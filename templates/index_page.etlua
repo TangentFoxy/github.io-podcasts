@@ -1,0 +1,37 @@
+<html>
+<head>
+<title><%= title %></title>
+<style>
+  h1, h2 { text-align: center; }
+  audio { display: block; }
+  audio, div { margin: auto; }
+  div, img { width: 512px; }
+  img { height: 256px; object-fit: cover; }
+  #podcast { height: 512px; object-fit: fill; }
+</style>
+</head>
+<body>
+<div>
+  <p><a href="<%- base_url %>feed.xml">Click here to subscribe!</a></p>
+  <h1><%= title %></h1>
+  <img id="podcast" src="<%- base_url %>podcast.jpg" />
+  <%- description %>
+  <hr />
+  <% if #episodes_list > 0 then %>
+    <%
+      local order = {}
+      for n in pairs(episodes_list) do
+        table.insert(order, n)
+      end
+      table.sort(order, function(a,b) return a > b end)
+    %>
+    <% for _, i in ipairs(order) do %>
+      <% local episode = episodes_data[ episodes_list[i] ] %>
+      <h2><a href="<%- base_url %><%- episode.urlencoded_title %>.html"><%= episode.title %></a></h2>
+      <img src="<%- base_url %><%- episode.urlencoded_title %>.jpg" />
+      <%- episode.summary %>
+    <% end %>
+  <% end %>
+</div>
+</body>
+</html>
