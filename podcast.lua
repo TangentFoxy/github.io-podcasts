@@ -179,6 +179,15 @@ local function publish_episode(episode_title)
   os.execute("mv " .. (episode.file_name .. ".mp3"):enquote() .. " " .. ("docs/" .. episode.file_name .. ".mp3"):enquote())
   os.execute("mv " .. (episode.file_name .. ".jpg"):enquote() .. " " .. ("docs/" .. episode.file_name .. ".jpg"):enquote())
 
+  if database.scheduled_episodes then
+    for unix_timestamp, scheduled_episode_title in pairs(database.scheduled_episodes) do
+      if scheduled_episode_title == episode_title then
+        database.scheduled_episodes[unix_timestamp] = nil
+        break
+      end
+    end
+  end
+
   save_database(database)
 
   os.execute("git add *")
@@ -250,7 +259,7 @@ local function infinite_loop()
         if now >= tonumber(unix_timestamp) then
           publish_episode(episode_title)
           database.scheduled_episodes[unix_timestamp] = nil
-          save_database(database)
+          -- save_database(database) -- publish_episode loads and saves the database itself, we should not save it here
           break
         end
       end
