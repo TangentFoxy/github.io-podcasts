@@ -6,6 +6,9 @@ Windows-only for the time being.
 [Apple's Podcast Requirements](https://podcasters.apple.com/support/823-podcast-requirements)
 is a good hub for learning about what is expected in podcast RSS feeds and such.  
 Of particular importance is their list of [Podcast Categories](https://podcasters.apple.com/support/1691-apple-podcasts-categories).
+- [A Podcaster’s Guide to RSS](https://help.apple.com/itc/podcasts_connect/#/itcb54353390) might be *even better*.
+- [Artwork requirements](https://podcasters.apple.com/support/896-artwork-requirements) are not as strict as stated.
+- [How to create an episode](https://podcasters.apple.com/support/825-how-to-create-an-episode) may be useful. New tag types have been added.
 
 Useful tools:
 - [Cast Feed Validator](https://www.castfeedvalidator.com)
