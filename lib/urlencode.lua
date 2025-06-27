@@ -1,4 +1,5 @@
 -- modified from https://gist.github.com/liukun/f9ce7d6d14fa45fe9b924a3eed5c3d99
+-- modified again to fix an issue with that version, and packaged for require()
 
 local char_to_hex = function(c)
   return string.format("%%%02X", string.byte(c))
@@ -28,8 +29,13 @@ local urldecode = function(url)
   return url
 end
 
-return urlencode
-
 -- ref: https://gist.github.com/ignisdesign/4323051
 -- ref: http://stackoverflow.com/questions/20282054/how-to-urldecode-a-request-uri-string-in-lua
 -- to encode table as parameters, see https://github.com/stuartpb/tvtropes-lua/blob/master/urlencode.lua
+
+return setmetatable({
+  encode = urlencode,
+  decode = urldecode,
+}, {
+  __call = function(tab, ...) return urlencode(...) end,
+})

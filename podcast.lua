@@ -32,7 +32,8 @@ Requirements:
 - notepad (lol)
 ]]
 
-local utility = require("lib.utility")
+package.path = (arg[0]:match("@?(.*/)") or arg[0]:match("@?(.*\\)")) .. "?.lua;" .. package.path
+local utility = require "lib.utility"
 
 local function load_database()
   local json = require("lib.json")
