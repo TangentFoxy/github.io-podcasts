@@ -32,15 +32,16 @@ local help = [[Usage:
   - notepad (lol)
 ]]
 
-package.path = (arg[0]:match("@?(.*/)") or arg[0]:match("@?(.*\\)")) .. "?.lua;" .. package.path
-local utility = require "lib.utility"
-local argparse = require "lib.argparse"
-local json = require "lib.dkjson"
+package.path = (arg[0]:match("@?(.*/)") or arg[0]:match("@?(.*\\)")) .. "lib" .. package.config:sub(1, 1) .. "?.lua;" .. package.path
+local utility = require "utility"
+local argparse = require "argparse"
+local json = require "dkjson"
 
 local parser = argparse():help_max_width(80)
 local new = parser:command("new", "start adding a new episode")
 new:argument("title", "episode title (ideally should match MP3 file and optional JPG file names)"):args(1)
-new:argument("file name", "if the title and file names are different, specify the file name here"):args("?")
+new:argument("file_name", "if the title and file names are different, specify the file name here"):args("?")
+new:option("-s --skip"):choices{"mp3tag", "description"}:count("*")
 local publish = parser:command("publish", "finish adding an episode and publish it immediately")
 publish:argument("title", "episode title"):args(1)
 local delete = parser:command("delete", "deletes an episode (regenerate is run as well if the episode had been published), files are moved to a local trash folder in case recovery is necessary")
@@ -48,10 +49,19 @@ delete:argument("title", "episode title"):args(1)
 local regenerate = parser:command("regenerate", "regenerates all web pages and RSS feed")
 local metadata = parser:command("metadata", "print podcast metadata")
 local schedule = parser:command("schedule", "schedule an episode to be published automatically at a later date/time, requires an instance of scheduler running (or \"at\" to be installed on Linux)")
-schedule:argument("title"):args(1)
-schedule:argument("date/time"):args(1)
+schedule:argument("title", "episode title"):args(1)
+schedule:argument("date_time", "publication date/time (uses LuaDate to parse https://tieske.github.io/date/)"):args(1)
 local scheduler = parser:command("scheduler", "eternally loops, publishing episodes as scheduled")
 local options = parser:parse()
+
+if options.skip then
+  for _, option in ipairs(options.skip) do
+    options.skip[option] = true
+  end
+end
+
+utility.print_table(options)
+if true then os.exit(1) end
 
 
 
@@ -71,13 +81,15 @@ local function save_database(database)
   end)
 end
 
+
+
 -- starts adding a new episode to the database
 --   some functions require manual intervention, which is why this STARTS the process
 --   MP3 file and JPG file should already exist in the local directory when you run this!
-local function new_episode(episode_title, file_name, skip_mp3tag) -- skip_description option?
+local function new_episode(episode_title, file_name, skip)
   local database = load_database()
-  local urlencode = require("lib.urlencode")
-  local markdown = require("lib.markdown")
+  local urlencode = require("urlencode")
+  local markdown = require("markdown")
 
   assert(not database.episodes_data[episode_title], "An episode with that title already exists.")
 
@@ -98,7 +110,7 @@ local function new_episode(episode_title, file_name, skip_mp3tag) -- skip_descri
     episode.summary = markdown(file:read("*all"))  --TODO save markdown, and process only when building pages
   end)
 
-  if not skip_mp3tag then
+  if not options.skip.mp3tag then
     print("Opening mp3tag to add episode artwork.\n  (This step must be completed manually, and then podcast.lua must be called again to finish this episode!)")
     os.execute("mp3tag /fn:" .. (episode.file_name .. ".mp3"):enquote())
   end
@@ -108,8 +120,10 @@ local function new_episode(episode_title, file_name, skip_mp3tag) -- skip_descri
   save_database(database)
 end
 
+
+
 local function generate_feed(database)
-  local etlua = require("lib.etlua")
+  local etlua = require("etlua")
 
   local feed_template
   utility.open("templates/feed.etlua", "r")(function(file)
@@ -135,7 +149,7 @@ local function generate_feed(database)
 end
 
 local function generate_page(database, episode)
-  local etlua = require("lib.etlua")
+  local etlua = require("etlua")
 
   local episode_page_template
   utility.open("templates/episode_page.etlua", "r")(function(file)
@@ -157,7 +171,7 @@ local function generate_page(database, episode)
 end
 
 local function generate_all_pages(database)
-  local etlua = require("lib.etlua")
+  local etlua = require("etlua")
 
   for _, episode_title in pairs(database.episodes_list) do
     local episode = database.episodes_data[episode_title]
@@ -171,6 +185,8 @@ local function generate_everything(database)
   generate_feed(database)
   generate_all_pages(database)
 end
+
+
 
 local function publish_episode(episode_title)
   local database = load_database()
@@ -239,15 +255,8 @@ local function delete_episode(episode_title)
   save_database(database)
 end
 
-local function print_metadata()
-  local database = load_database()
-  database.episodes_data = nil
-  database.episodes_list = nil
-  utility.print_table(database)
-end
-
 local function schedule(episode_title, datetime)
-  local date = require("lib.date")
+  local date = require("date")
   local database = load_database()
 
   local episode = database.episodes_data[episode_title]
@@ -285,41 +294,29 @@ local function infinite_loop()
   end
 end
 
-local function argparse(arguments, positional_arguments)
-  local recognized_arguments = {}
-  for index, argument in ipairs(arguments) do
-    for _, help_command in ipairs({"-h", "--help", "/?", "/help", "help"}) do
-      if argument == help_command then
-        print(help)
-        return nil
-      end
-    end
-    if positional_arguments[index] then
-      recognized_arguments[positional_arguments[index]] = argument
-    end
-  end
-  return recognized_arguments
+
+
+local function print_metadata()
+  local database = load_database()
+  database.episodes_data = nil
+  database.episodes_list = nil
+  utility.print_table(database)
 end
 
-local function main(arguments)
-  local actions = {
-    new = new_episode,
-    publish = publish_episode,
-    delete = delete_episode,
-    regenerate = function()
-      generate_everything(load_database())
-    end,
-    metadata = print_metadata,
-    schedule = schedule,
-    scheduler = infinite_loop,
-  }
-  if actions[arguments.action] then
-    return actions[arguments.action](arguments.title, arguments.file_name)
-  else
-    error("Invalid <action>.")
-  end
-end
 
-local arguments = argparse(arg, {"action", "title", "file_name"})
-if not arguments then return end
-main(arguments)
+
+if options.new then
+  new_episode(options.title, options.file_name, options.skip)
+elseif options.publish then
+  publish_episode(options.title)
+elseif options.delete then
+  delete_episode(options.title)
+elseif options.regenerate then
+  generate_everything(load_database())
+elseif options.metadata then
+  print_metadata()
+elseif options.schedule then
+  schedule(options.title, options.date_time)
+elseif options.scheduler then
+  infinite_loop()
+end
