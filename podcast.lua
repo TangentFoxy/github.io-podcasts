@@ -1,41 +1,13 @@
 #!/usr/bin/env luajit
 
-local help = [[Usage:
-
-    podcast.lua <action> <title> [options]
-
-  <action>:
-    new:        Starts the process of adding a new episode. An MP3 file should be
-                placed in the root of the repo, next to this script. The file name
-                should match the title. If it doesn't, specify the file name as an
-                extra argument WITHOUT EXTENSION. If episode artwork is included,
-                it should have the same name as the MP3 file, be in JPEG format,
-                and end in ".jpg". Notepad will be opened to write the episode
-                description. It will be converted to HTML from Markdown.
-    publish:    Finishes adding a new episode and publishes it immediately as the
-                next episode. (Does not commit and push YET, you must do so.)
-    delete:     Deletes an episode. If it was published, then regenerate is run as
-                well. Files are moved to a "trash" folder locally in case of
-                accidental removal.
-    regenerate: In case of template changes or unpublished changes to database,
-                this regenerates every page (and feed).
-    metadata:   Prints podcast metadata.
-    schedule:   Schedules an episode to be published automatically. Requires
-                "podcast.lua scheduler" running in the background. LuaDate is used
-                to handle a variety of datetime formats automatically.
-    scheduler:  Checks every minute for when an episode should be published, and
-                publishes when necessary.
-
-  Requirements:
-  - ffprobe (part of ffmpeg)
-  - mp3tag (optional, for episode artwork)
-  - notepad (lol)
-]]
-
 package.path = (arg[0]:match("@?(.*/)") or arg[0]:match("@?(.*\\)")) .. "lib" .. package.config:sub(1, 1) .. "?.lua;" .. package.path
 local utility = require "utility"
 local argparse = require "argparse"
 local json = require "dkjson"
+local urlencode = require "urlencode"
+local markdown = require "markdown"
+local etlua = require "etlua"
+local date = require "date"
 
 local parser = argparse():help_max_width(80)
 local new = parser:command("new", "start adding a new episode")
@@ -62,6 +34,11 @@ end
 
 
 
+utility.required_program("ffprobe")
+if utility.OS == "Windows" then
+  utility.required_program("mp3tag")
+end
+
 local function load_database()
   local database = utility.open("configuration.json", "r")(function(file)
     return json.decode(file:read("*all"))
@@ -85,8 +62,6 @@ end
 --   MP3 file and JPG file should already exist in the local directory when you run this!
 local function new_episode(episode_title, file_name, skip)
   local database = load_database()
-  local urlencode = require("urlencode")
-  local markdown = require("markdown")
 
   assert(not database.episodes_data[episode_title], "An episode with that title already exists.")
 
@@ -120,8 +95,6 @@ end
 
 
 local function generate_feed(database)
-  local etlua = require("etlua")
-
   local feed_template
   utility.open("templates/feed.etlua", "r")(function(file)
     feed_template = file:read("*all")
@@ -146,8 +119,6 @@ local function generate_feed(database)
 end
 
 local function generate_page(database, episode)
-  local etlua = require("etlua")
-
   local episode_page_template
   utility.open("templates/episode_page.etlua", "r")(function(file)
     episode_page_template = file:read("*all")
@@ -168,8 +139,6 @@ local function generate_page(database, episode)
 end
 
 local function generate_all_pages(database)
-  local etlua = require("etlua")
-
   for _, episode_title in pairs(database.episodes_list) do
     local episode = database.episodes_data[episode_title]
     generate_page(database, episode)
@@ -253,7 +222,6 @@ local function delete_episode(episode_title)
 end
 
 local function schedule(episode_title, datetime)
-  local date = require("date")
   local database = load_database()
 
   local episode = database.episodes_data[episode_title]
