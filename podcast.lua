@@ -2,56 +2,72 @@
 
 local help = [[Usage:
 
-  podcast.lua <action> <title> [options]
+    podcast.lua <action> <title> [options]
 
-<action>:
-  new:        Starts the process of adding a new episode. An MP3 file should be
-              placed in the root of the repo, next to this script. The file name
-              should match the title. If it doesn't, specify the file name as an
-              extra argument WITHOUT EXTENSION. If episode artwork is included,
-              it should have the same name as the MP3 file, be in JPEG format,
-              and end in ".jpg". Notepad will be opened to write the episode
-              description. It will be converted to HTML from Markdown.
-  publish:    Finishes adding a new episode and publishes it immediately as the
-              next episode. (Does not commit and push YET, you must do so.)
-  delete:     Deletes an episode. If it was published, then regenerate is run as
-              well. Files are moved to a ".trash" folder locally in case of
-              accidental removal.
-  regenerate: In case of template changes or unpublished changes to database,
-              this regenerates every page (and feed).
-  metadata:   Prints podcast metadata.
-  schedule:   Schedules an episode to be published automatically. Requires
-              "podcast.lua scheduler" running in the background. LuaDate is used
-              to handle a variety of datetime formats automatically.
-  scheduler:  Checks every minute for when an episode should be published, and
-              publishes when necessary.
+  <action>:
+    new:        Starts the process of adding a new episode. An MP3 file should be
+                placed in the root of the repo, next to this script. The file name
+                should match the title. If it doesn't, specify the file name as an
+                extra argument WITHOUT EXTENSION. If episode artwork is included,
+                it should have the same name as the MP3 file, be in JPEG format,
+                and end in ".jpg". Notepad will be opened to write the episode
+                description. It will be converted to HTML from Markdown.
+    publish:    Finishes adding a new episode and publishes it immediately as the
+                next episode. (Does not commit and push YET, you must do so.)
+    delete:     Deletes an episode. If it was published, then regenerate is run as
+                well. Files are moved to a "trash" folder locally in case of
+                accidental removal.
+    regenerate: In case of template changes or unpublished changes to database,
+                this regenerates every page (and feed).
+    metadata:   Prints podcast metadata.
+    schedule:   Schedules an episode to be published automatically. Requires
+                "podcast.lua scheduler" running in the background. LuaDate is used
+                to handle a variety of datetime formats automatically.
+    scheduler:  Checks every minute for when an episode should be published, and
+                publishes when necessary.
 
-Requirements:
-- ffprobe (part of ffmpeg)
-- mp3tag (optional, for episode artwork)
-- notepad (lol)
+  Requirements:
+  - ffprobe (part of ffmpeg)
+  - mp3tag (optional, for episode artwork)
+  - notepad (lol)
 ]]
 
 package.path = (arg[0]:match("@?(.*/)") or arg[0]:match("@?(.*\\)")) .. "?.lua;" .. package.path
 local utility = require "lib.utility"
+local argparse = require "lib.argparse"
+local json = require "lib.dkjson"
+
+local parser = argparse():help_max_width(80)
+local new = parser:command("new", "start adding a new episode")
+new:argument("title", "episode title (ideally should match MP3 file and optional JPG file names)"):args(1)
+new:argument("file name", "if the title and file names are different, specify the file name here"):args("?")
+local publish = parser:command("publish", "finish adding an episode and publish it immediately")
+publish:argument("title", "episode title"):args(1)
+local delete = parser:command("delete", "deletes an episode (regenerate is run as well if the episode had been published), files are moved to a local trash folder in case recovery is necessary")
+delete:argument("title", "episode title"):args(1)
+local regenerate = parser:command("regenerate", "regenerates all web pages and RSS feed")
+local metadata = parser:command("metadata", "print podcast metadata")
+local schedule = parser:command("schedule", "schedule an episode to be published automatically at a later date/time, requires an instance of scheduler running (or \"at\" to be installed on Linux)")
+schedule:argument("title"):args(1)
+schedule:argument("date/time"):args(1)
+local scheduler = parser:command("scheduler", "eternally loops, publishing episodes as scheduled")
+local options = parser:parse()
+
+
 
 local function load_database()
-  local json = require("lib.json")
-  local database
-  utility.open("configuration.json", "r")(function(file)
-    database = json.decode(file:read("*all"))
+  local database = utility.open("configuration.json", "r")(function(file)
+    return json.decode(file:read("*all"))
   end)
-  if not database.next_episode_number then -- addresses #20 episode numbering can have missing items
+  if not database.next_episode_number then -- partially addresses #20 episode numbering can have missing items
     database.next_episode_number = #database.episodes_list + 1
   end
   return database
 end
 
 local function save_database(database)
-  local json = require("lib.json")
-  local encoded_json = json.encode(database)
   utility.open("configuration.json", "w")(function(file)
-    file:write(encoded_json)
+    file:write(json.encode(database, { indent = true }))
   end)
 end
 
@@ -203,22 +219,22 @@ local function delete_episode(episode_title)
   local episode = database.episodes_data[episode_title]
   assert(episode, "Episode " .. episode_title:enquote() .. " does not exist.")
 
-  os.execute("mkdir .trash")
+  os.execute("mkdir trash")
 
   if episode.episode_number then
     database.episodes_list[episode.episode_number] = nil
-    os.execute("mv " .. ("docs/" .. episode.file_name .. ".mp3"):enquote() .. " .trash/")
-    os.execute("mv " .. ("docs/" .. episode.file_name .. ".jpg"):enquote() .. " .trash/")
-    os.execute("mv " .. ("docs/" .. episode.file_name .. ".html"):enquote() .. " .trash/")
+    os.execute("mv " .. ("docs/" .. episode.file_name .. ".mp3"):enquote() .. " trash/")
+    os.execute("mv " .. ("docs/" .. episode.file_name .. ".jpg"):enquote() .. " trash/")
+    os.execute("mv " .. ("docs/" .. episode.file_name .. ".html"):enquote() .. " trash/")
     generate_everything(database)
   else
-    os.execute("mv " .. (episode.file_name .. ".mp3"):enquote() .. " .trash/")
-    os.execute("mv " .. (episode.file_name .. ".jpg"):enquote() .. " .trash/")
+    os.execute("mv " .. (episode.file_name .. ".mp3"):enquote() .. " trash/")
+    os.execute("mv " .. (episode.file_name .. ".jpg"):enquote() .. " trash/")
   end
   database.episodes_data[episode_title] = nil
 
   -- TODO add a force-deletion argument to delete instead of move
-  print("Any MP3, JPG, or HTML files have been moved to ./.trash as a precaution against data loss.")
+  print("Any MP3, JPG, or HTML files have been moved to ./trash as a precaution against data loss.")
 
   save_database(database)
 end
