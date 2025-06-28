@@ -60,9 +60,6 @@ if options.skip then
   end
 end
 
-utility.print_table(options)
-if true then os.exit(1) end
-
 
 
 local function load_database()
@@ -98,7 +95,7 @@ local function new_episode(episode_title, file_name, skip)
     file_name = file_name or episode_title,
     guid = utility.uuid(),
   }
-  local duration_seconds = utility.capture_execute("ffprobe -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 " .. (episode.file_name .. ".mp3"):enquote())
+  local duration_seconds = utility.capture("ffprobe -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 " .. (episode.file_name .. ".mp3"):enquote() .. utility.commands.silence_errors)
   episode.duration_seconds = math.floor(tonumber(duration_seconds))
   episode.urlencoded_title = urlencode(episode.file_name) -- NOTE misnomer, should be renamed to urlencoded_file_name_without_extension
 
