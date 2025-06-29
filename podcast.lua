@@ -116,7 +116,9 @@ local function new_episode(episode_title, file_name, skip)
   assert(not utility.is_file("data/" .. file_name .. ".json"), "An episode with that title or file name already exists.")
   if not utility.is_file(file_name .. ".mp3") then
     local _, _, extension = utility.split_path_components(file_name)
-    file_name = file_name:sub(1, -(#extension+2))
+    if extension then
+      file_name = file_name:sub(1, -(#extension+2))
+    end
   end
   assert(not utility.is_file("data/" .. file_name .. ".json"), "An episode with that title or file name already exists.")
   assert(utility.is_file(file_name .. ".mp3"), "An MP3 must be placed in the same directory as this script first. Its name should be the title or specified manually when different!")
@@ -270,6 +272,10 @@ local function publish_episode(episode_title_or_file, options)
     database.published_episodes[episode_number].file_name = episode.file_name
   end
 
+  -- these have to be saved before generators are called or the generators fail
+  save_database(database)
+  podcast.save_episode(episode)
+
   -- NOTE I want to allow truncated summaries
 
   -- TODO in the future, don't recompile the ENTIRE thing just for adding an episode
@@ -289,7 +295,6 @@ local function publish_episode(episode_title_or_file, options)
   end
 
   save_database(database)
-  podcast.save_episode(episode)
 
   if not options.no_git then
     os.execute("git add *")
