@@ -1,3 +1,5 @@
-<p>This episode was published as a <em>very fast</em> test to make sure it works.</p>
+This episode was published as a *very fast* test to make sure it works.
 
-<p>Let's make sure <a href="https://blog.tangentfox.com">links</a> and <code>similar</code> formatting works. Also this should be properly displayed as <code>&lt;img&gt;</code>: (I actually screwed it up and had to manually fix this. Whoops!)</p>
+Let's make sure [links](https://blog.tangentfox.com) and `similar` formatting works. Also this should be properly displayed as `<img>`: (I actually screwed it up and had to manually fix this. Whoops!)
+
+This description was updated again to make sure recent changes work as intended!
