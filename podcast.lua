@@ -40,7 +40,34 @@ if utility.OS == "Windows" then
   utility.required_program("mp3tag")
 end
 
-local function convert_database(database)
+local convert_database
+
+local function load_database()
+  -- TODO there should be a way to generate new without requiring it to already exist..
+  local database = utility.open("configuration.json", "r")(function(file)
+    return json.decode(file:read("*all"))
+  end)
+  if not database.next_episode_number then
+    if database.episodes_list then
+      database.next_episode_number = #database.episodes_list + 1
+    else
+      database.next_episode_number = #database.published_episodes + 1
+    end
+  end
+  if database.episodes_data then
+    convert_database(database)
+  end
+  return database
+end
+
+local function save_database(database)
+  utility.open("configuration.json", "w")(function(file)
+    file:write(json.encode(database, { indent = true }))
+    file:write("\n")
+  end)
+end
+
+convert_database = function(database)
   database.published_episodes = {}
   for i = 1, database.next_episode_number - 1 do
     database.published_episodes[i] = {}
@@ -65,30 +92,8 @@ local function convert_database(database)
   database.episodes_data = nil
 
   database.episodes_list = nil
-end
 
-local function load_database()
-  -- TODO there should be a way to generate new without requiring it to already exist..
-  local database = utility.open("configuration.json", "r")(function(file)
-    return json.decode(file:read("*all"))
-  end)
-  if not database.next_episode_number then
-    if database.episodes_list then
-      database.next_episode_number = #database.episodes_list + 1
-    else
-      database.next_episode_number = #database.published_episodes + 1
-    end
-  end
-  if database.episodes_data then
-    convert_database(database)
-  end
-  return database
-end
-
-local function save_database(database)
-  utility.open("configuration.json", "w")(function(file)
-    file:write(json.encode(database, { indent = true }))
-  end)
+  save_database(database)
 end
 
 
@@ -289,7 +294,7 @@ local function delete_episode(episode_title_or_file)
   end)
   assert(episode, "Episode " .. episode_title_or_file:enquote() .. " does not exist.")
 
-  os.execute("mkdir trash")
+  os.execute("mkdir trash" .. utility.commands.silence_errors)
 
   if episode.episode_number then
     database.published_episodes[episode.episode_number] = {}
@@ -361,7 +366,7 @@ end
 
 
 
-os.execute("mkdir data")
+os.execute("mkdir data" .. utility.commands.silence_errors)
 
 if options.new then
   new_episode(options.title, options.file_name, options.skip)
