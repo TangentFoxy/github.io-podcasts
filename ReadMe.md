@@ -14,7 +14,11 @@ Useful tools:
 - [Cast Feed Validator](https://www.castfeedvalidator.com)
 
 ## Usage
-See `./podcast.lua -h` for help.
+See `./podcast.lua -h` for command help.
+
+1. Put your MP3 and JPG for the episode in this directory, with the same file name.
+2. Run the `new` command to get episode metadata ready. (This will open a file to write the description in.)
+3. Run `publish` command to publish the episode. Use `--no-git` to prevent pushing changes if you need to double-check things.
 
 ### Requirements
 - ffprobe (part of ffmpeg)
