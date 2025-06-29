@@ -40,6 +40,20 @@ if utility.OS == "Windows" then
   utility.required_program("mp3tag")
 end
 
+local podcast = {}
+
+function podcast.save2json(file_name, tab)
+  utility.open(file_name, "w", function(file)
+    local encoded_json = json.encode(tab, { indent = true })
+    file:write(encoded_json)
+    file:write("\n")
+  end)
+end
+
+function podcast.save_episode(episode)
+  podcast.save2json("data/" .. episode.file_name .. ".json", episode)
+end
+
 local convert_database
 
 local function load_database()
@@ -61,10 +75,7 @@ local function load_database()
 end
 
 local function save_database(database)
-  utility.open("configuration.json", "w")(function(file)
-    file:write(json.encode(database, { indent = true }))
-    file:write("\n")
-  end)
+  podcast.save2json("configuration.json", database)
 end
 
 convert_database = function(database)
@@ -78,9 +89,7 @@ convert_database = function(database)
       file:write(episode.summary)
     end)
     episode.summary = nil
-    utility.open("data/" .. episode.file_name .. ".json", "w", function(file)
-      file:write(json.encode(episode, { indent = true }))
-    end)
+    podcast.save_episode(episode)
     if episode.episode_number then
       local published_episode = database.published_episodes[episode.episode_number]
       published_episode.title = episode.title
@@ -141,9 +150,7 @@ local function new_episode(episode_title, file_name, skip)
     os.execute("mp3tag /fn:" .. (episode.file_name .. ".mp3"):enquote())
   end
 
-  utility.open("data/" .. episode.file_name .. ".json", "w", function(file)
-    file:write(json.encode(episode, { indent = true }))
-  end)
+  podcast.save_episode(episode)
 end
 
 
@@ -178,13 +185,13 @@ local function generate_feed(database)
   local feed_content = etlua.compile(feed_template)(database)
   feed_content = feed_content:gsub("%s+", " ")
   utility.open("docs/feed.xml", "w")(function(file)
-    file:write(feed_content)
+    file:write(feed_content:sub(1, -2))
   end)
 
   local index_content = etlua.compile(index_page_template)(database)
   index_content = index_content:gsub("%s+", " ")
   utility.open("docs/index.html", "w")(function(file)
-    file:write(index_content)
+    file:write(index_content:sub(1, -2))
   end)
 
   database.episodes_data = nil
@@ -212,7 +219,7 @@ local function generate_page(database, episode)
   })
   episode_page_content = episode_page_content:gsub("%s+", " ")
   utility.open("docs/" .. episode.file_name .. ".html", "w")(function(file)
-    file:write(episode_page_content)
+    file:write(episode_page_content:sub(1, -2))
   end)
 
   return true
@@ -277,9 +284,7 @@ local function publish_episode(episode_title_or_file, options)
   end
 
   save_database(database)
-  utility.open("data/" .. episode.file_name .. ".json", "w", function(file)
-    file:write(json.encode(episode, { indent = true }))
-  end)
+  podcast.save_episode(episode)
 
   if not options.no_git then
     os.execute("git add *")
