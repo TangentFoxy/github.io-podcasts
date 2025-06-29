@@ -12,8 +12,8 @@
 <div>
   <p><a href="<%- base_url %>">homepage</a></p>
   <h1><%= episode_title %></h1>
-  <img src="<%- base_url %><%- urlencoded_title %>.jpg" />
-  <audio controls src="<%- base_url %><%- urlencoded_title %>.mp3"></audio>
+  <img src="<%- base_url %><%- urlencoded_file_name %>.jpg" />
+  <audio controls src="<%- base_url %><%- urlencoded_file_name %>.mp3"></audio>
   <%- episode_summary %>
 </div>
 </body>

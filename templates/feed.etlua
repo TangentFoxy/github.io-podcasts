@@ -23,14 +23,14 @@
       <% local episode = episodes_data[episode_title] %>
       <item>
         <title><%= episode.title %></title>
-        <link><%- base_url %><%- episode.urlencoded_title %>.html</link>
+        <link><%- base_url %><%- episode.urlencoded_file_name %>.html</link>
         <description><![CDATA[<%- episode.summary %>]]></description>
-        <enclosure length="<%= episode.file_size %>" type="audio/mpeg" url="<%- base_url %><%- episode.urlencoded_title %>.mp3" />
+        <enclosure length="<%= episode.file_size %>" type="audio/mpeg" url="<%- base_url %><%- episode.urlencoded_file_name %>.mp3" />
         <pubDate><%= episode.published_datetime %></pubDate>
         <guid><%= episode.guid %></guid>
         <itunes:duration><%= episode.duration_seconds %></itunes:duration>
         <itunes:episode><%= episode.episode_number %></itunes:episode>
-        <itunes:image href="<%- base_url %><%- episode.urlencoded_title %>.jpg" />
+        <itunes:image href="<%- base_url %><%- episode.urlencoded_file_name %>.jpg" />
       </item>
     <% end %>
   <% end %>

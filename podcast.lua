@@ -15,13 +15,14 @@ new:argument("title", "episode title (ideally should match MP3 file and optional
 new:argument("file_name", "if the title and file names are different, specify the file name here"):args("?")
 new:option("-s --skip"):choices{"mp3tag", "description"}:count("*")
 local publish = parser:command("publish", "finish adding an episode and publish it immediately")
-publish:argument("title", "episode title"):args(1)
+publish:argument("title", "episode title (or file name if it is different!)"):args(1)
+publish:flag("--no-git", "do not automatically add, commit, and push all changes")
 local delete = parser:command("delete", "deletes an episode (regenerate is run as well if the episode had been published), files are moved to a local trash folder in case recovery is necessary")
-delete:argument("title", "episode title"):args(1)
+delete:argument("title", "episode title (or file name if it is different!)"):args(1)
 local regenerate = parser:command("regenerate", "regenerates all web pages and RSS feed")
 local metadata = parser:command("metadata", "print podcast metadata")
 local schedule = parser:command("schedule", "schedule an episode to be published automatically at a later date/time, requires an instance of scheduler running (or \"at\" to be installed on Linux)")
-schedule:argument("title", "episode title"):args(1)
+schedule:argument("title", "episode title (or file name if it is different!)"):args(1)
 schedule:argument("date_time", "publication date/time (uses LuaDate to parse https://tieske.github.io/date/)"):args(1)
 local scheduler = parser:command("scheduler", "eternally loops, publishing episodes as scheduled")
 local options = parser:parse()
@@ -39,12 +40,47 @@ if utility.OS == "Windows" then
   utility.required_program("mp3tag")
 end
 
+local function convert_database(database)
+  database.published_episodes = {}
+  for i = 1, database.next_episode_number - 1 do
+    database.published_episodes[i] = {}
+  end
+
+  for _, episode in pairs(database.episodes_data) do
+    utility.open("data/" .. episode.file_name .. ".md", "w", function(file)
+      file:write(episode.summary)
+    end)
+    episode.summary = nil
+    utility.open("data/" .. episode.file_name .. ".json", "w", function(file)
+      file:write(json.encode(episode, { indent = true }))
+    end)
+    if episode.episode_number then
+      local published_episode = database.published_episodes[episode.episode_number]
+      published_episode.title = episode.title
+      if episode.title ~= episode.file_name then
+        published_episode.file_name = episode.file_name
+      end
+    end
+  end
+  database.episodes_data = nil
+
+  database.episodes_list = nil
+end
+
 local function load_database()
+  -- TODO there should be a way to generate new without requiring it to already exist..
   local database = utility.open("configuration.json", "r")(function(file)
     return json.decode(file:read("*all"))
   end)
-  if not database.next_episode_number then -- partially addresses #20 episode numbering can have missing items
-    database.next_episode_number = #database.episodes_list + 1
+  if not database.next_episode_number then
+    if database.episodes_list then
+      database.next_episode_number = #database.episodes_list + 1
+    else
+      database.next_episode_number = #database.published_episodes + 1
+    end
+  end
+  if database.episodes_data then
+    convert_database(database)
   end
   return database
 end
@@ -61,35 +97,48 @@ end
 --   some functions require manual intervention, which is why this STARTS the process
 --   MP3 file and JPG file should already exist in the local directory when you run this!
 local function new_episode(episode_title, file_name, skip)
-  local database = load_database()
+  file_name = file_name or episode_title
 
-  assert(not database.episodes_data[episode_title], "An episode with that title already exists.")
+  assert(not utility.is_file("data/" .. file_name .. ".json"), "An episode with that title or file name already exists.")
+  if not utility.is_file(file_name .. ".mp3") then
+    local _, _, extension = utility.split_path_components(file_name)
+    file_name = file_name:sub(1, -(#extension+2))
+  end
+  assert(not utility.is_file("data/" .. file_name .. ".json"), "An episode with that title or file name already exists.")
+  assert(utility.is_file(file_name .. ".mp3"), "An MP3 must be placed in the same directory as this script first. Its name should be the title or specified manually when different!")
 
   local episode = {
     title = episode_title,
-    file_name = file_name or episode_title,
+    file_name = file_name,
     guid = utility.uuid(),
   }
   local duration_seconds = utility.capture("ffprobe -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 " .. (episode.file_name .. ".mp3"):enquote() .. utility.commands.silence_errors)
   episode.duration_seconds = math.floor(tonumber(duration_seconds))
-  episode.urlencoded_title = urlencode(episode.file_name) -- NOTE misnomer, should be renamed to urlencoded_file_name_without_extension
+  episode.urlencoded_file_name = urlencode(episode.file_name)
 
-  print("Opening notepad to write episode summary!")
-  os.execute("echo 0>> new_episode.description > NUL")
-  -- utility.open("new_episode.description", "w")(function(file) file:write("") end) -- the previous description being left in-place is a feature, not a bug
-  os.execute("notepad new_episode.description") -- this is blocking
-  utility.open("new_episode.description", "r")(function(file)
-    episode.summary = markdown(file:read("*all"))  --TODO save markdown, and process only when building pages
-  end)
+  local summary_file_name = ("data/" .. episode.file_name .. ".md")
+  os.execute("echo \"\" > " .. summary_file_name:enquote() .. utility.commands.silence_errors) -- TODO replace with touch
+
+  if not options.skip.description then
+    if utility.OS == "Windows" then
+      print("Opening notepad to write episode summary!")
+      os.execute("notepad " .. summary_file_name:enquote()) -- this is blocking, so we don't need to wait on input
+    else
+      print("Opening " .. summary_file_name:enquote() .. " to write episode summary!")
+      os.execute("open " .. summary_file_name:enquote()) -- NOT blocking, so we need to wait for user to specify to continue
+      print("Press enter to continue. ")
+      io.read("*line")
+    end
+  end
 
   if not options.skip.mp3tag then
     print("Opening mp3tag to add episode artwork.\n  (This step must be completed manually, and then podcast.lua must be called again to finish this episode!)")
     os.execute("mp3tag /fn:" .. (episode.file_name .. ".mp3"):enquote())
   end
 
-  -- return episode
-  database.episodes_data[episode_title] = episode
-  save_database(database)
+  utility.open("data/" .. episode.file_name .. ".json", "w", function(file)
+    file:write(json.encode(episode, { indent = true }))
+  end)
 end
 
 
@@ -100,20 +149,39 @@ local function generate_feed(database)
     feed_template = file:read("*all")
   end)
 
-  local feed_content = etlua.compile(feed_template)(database)
-  utility.open("docs/feed.xml", "w")(function(file)
-    file:write(feed_content)
-  end)
-
   local index_page_template
   utility.open("templates/index_page.etlua", "r")(function(file)
     index_page_template = file:read("*all")
+  end)
+
+  -- WARNING this is super hacky and really should be replaced with something better!
+  database.episodes_data = {}
+  database.episodes_list = {}
+  for _, info in ipairs(database.published_episodes) do
+    if info.title then
+      local episode = utility.open("data/" .. (info.file_name or info.title) .. ".json", "r", function(file)
+        return json.decode(file:read("*all"))
+      end)
+      episode.summary = utility.open("data/" .. episode.file_name .. ".md", "r", function(file)
+        return markdown(file:read("*all"))
+      end)
+      database.episodes_data[episode.title] = episode
+      database.episodes_list[episode.episode_number] = episode.title
+    end
+  end
+
+  local feed_content = etlua.compile(feed_template)(database)
+  utility.open("docs/feed.xml", "w")(function(file)
+    file:write(feed_content)
   end)
 
   local index_content = etlua.compile(index_page_template)(database)
   utility.open("docs/index.html", "w")(function(file)
     file:write(index_content)
   end)
+
+  database.episodes_data = nil
+  database.episodes_list = nil
 
   return true
 end
@@ -124,11 +192,15 @@ local function generate_page(database, episode)
     episode_page_template = file:read("*all")
   end)
 
+  local summary = utility.open("data/" .. episode.file_name .. ".md", "r", function(file)
+    return markdown(file:read("*all"))
+  end)
+
   local episode_page_content = etlua.compile(episode_page_template)({
     podcast_title = database.title,
     episode_title = episode.title,
-    urlencoded_title = episode.urlencoded_title,
-    episode_summary = episode.summary,
+    urlencoded_file_name = episode.urlencoded_file_name,
+    episode_summary = summary,
     base_url = database.base_url,
   })
   utility.open("docs/" .. episode.file_name .. ".html", "w")(function(file)
@@ -139,9 +211,12 @@ local function generate_page(database, episode)
 end
 
 local function generate_all_pages(database)
-  for _, episode_title in pairs(database.episodes_list) do
-    local episode = database.episodes_data[episode_title]
-    generate_page(database, episode)
+  for _, info in ipairs(database.published_episodes) do
+    if info.title then
+      utility.open("data/" .. (info.file_name or info.title) .. ".json", "r", function(file)
+        generate_page(database, json.decode(file:read("*all")))
+      end)
+    end
   end
 
   return true
@@ -154,12 +229,13 @@ end
 
 
 
-local function publish_episode(episode_title)
+local function publish_episode(episode_title_or_file, options)
   local database = load_database()
 
-  local episode = database.episodes_data[episode_title]
-  assert(episode, "Episode " .. episode_title:enquote() .. " does not exist.")
-  assert(not episode.episode_number, "Episode" .. episode_title:enquote() .. " has already been published!")
+  local episode = utility.open("data/" .. episode_title_or_file .. ".json", "r", function(file)
+    return json.decode(file:read("*all"))
+  end)
+  assert(not episode.episode_number, "Episode " .. episode.title:enquote() .. " has already been published!")
 
   local episode_number = database.next_episode_number or 1
   database.next_episode_number = episode_number + 1
@@ -167,7 +243,12 @@ local function publish_episode(episode_title)
   episode.file_size = utility.file_size(episode.file_name .. ".mp3")
   episode.published_datetime = os.date("%a, %d %b %Y %H:%M:%S GMT", os.time() - database.timezone_offset * 60 * 60)
 
-  database.episodes_list[episode_number] = episode.title
+  database.published_episodes[episode_number] = {
+    title = episode.title
+  }
+  if episode.title ~= episode.file_name then
+    database.published_episodes[episode_number].file_name = episode.file_name
+  end
 
   -- NOTE I want to allow truncated summaries
 
@@ -180,7 +261,7 @@ local function publish_episode(episode_title)
 
   if database.scheduled_episodes then
     for unix_timestamp, scheduled_episode_title in pairs(database.scheduled_episodes) do
-      if scheduled_episode_title == episode_title then
+      if scheduled_episode_title == episode_title_or_file then
         database.scheduled_episodes[unix_timestamp] = nil
         break
       end
@@ -188,23 +269,30 @@ local function publish_episode(episode_title)
   end
 
   save_database(database)
+  utility.open("data/" .. episode.file_name .. ".json", "w", function(file)
+    file:write(json.encode(episode, { indent = true }))
+  end)
 
-  os.execute("git add *")
-  os.execute("git commit -m " .. ("published episode " .. episode.episode_number):enquote())
-  os.execute("git pull origin")
-  os.execute("git push origin")
+  if not options.no_git then
+    os.execute("git add *")
+    os.execute("git commit -m " .. ("published episode " .. episode.episode_number):enquote())
+    os.execute("git pull origin")
+    os.execute("git push origin")
+  end
 end
 
-local function delete_episode(episode_title)
+local function delete_episode(episode_title_or_file)
   local database = load_database()
 
-  local episode = database.episodes_data[episode_title]
-  assert(episode, "Episode " .. episode_title:enquote() .. " does not exist.")
+  local episode = utility.open("data/" .. episode_title_or_file .. ".json", "r", function(file)
+    return json.decode(file:read("*all"))
+  end)
+  assert(episode, "Episode " .. episode_title_or_file:enquote() .. " does not exist.")
 
   os.execute("mkdir trash")
 
   if episode.episode_number then
-    database.episodes_list[episode.episode_number] = nil
+    database.published_episodes[episode.episode_number] = {}
     os.execute("mv " .. ("docs/" .. episode.file_name .. ".mp3"):enquote() .. " trash/")
     os.execute("mv " .. ("docs/" .. episode.file_name .. ".jpg"):enquote() .. " trash/")
     os.execute("mv " .. ("docs/" .. episode.file_name .. ".html"):enquote() .. " trash/")
@@ -213,27 +301,30 @@ local function delete_episode(episode_title)
     os.execute("mv " .. (episode.file_name .. ".mp3"):enquote() .. " trash/")
     os.execute("mv " .. (episode.file_name .. ".jpg"):enquote() .. " trash/")
   end
-  database.episodes_data[episode_title] = nil
+  os.execute("mv " .. ("data/" .. episode.file_name .. ".md"):enquote() .. "trash/")
+  os.execute("mv " .. ("data/" .. episode.file_name .. ".json"):enquote() .. "trash/")
 
   -- TODO add a force-deletion argument to delete instead of move
-  print("Any MP3, JPG, or HTML files have been moved to ./trash as a precaution against data loss.")
+  print("All relevant files have been moved to ./trash as a precaution against accidental data loss.")
 
   save_database(database)
 end
 
-local function schedule(episode_title, datetime)
+local function schedule(episode_title_or_file, datetime)
   local database = load_database()
 
-  local episode = database.episodes_data[episode_title]
-  assert(episode, "Episode " .. episode_title:enquote() .. " does not exist.")
-  assert(not episode.episode_number, "Episode" .. episode_title:enquote() .. " has already been published!")
+  local episode = utility.open("data/" .. episode_title_or_file .. ".json", "r", function(file)
+    return json.decode(file:read("*all"))
+  end)
+  assert(episode, "Episode " .. episode_title_or_file:enquote() .. " does not exist.")
+  assert(not episode.episode_number, "Episode " .. episode.title:enquote() .. " has already been published!")
 
   if not database.scheduled_episodes then database.scheduled_episodes = {} end
   datetime = date(datetime)
   local y, m, d = datetime:getdate()
   local h, s = datetime:gettime()
   local unix_timestamp = os.time({ year = y, month = m, day = d, hour = h, min = m })
-  database.scheduled_episodes[tostring(unix_timestamp)] = episode_title
+  database.scheduled_episodes[tostring(unix_timestamp)] = episode_title_or_file
 
   save_database(database)
   print("(In order for scheduling to work, an instance of " .. ("podcast.lua scheduler"):enquote() .. " must be running.)")
@@ -246,9 +337,9 @@ local function infinite_loop()
     print(os.date("%H:%M", now) .. " Checking schedule...")
     local database = load_database()
     if database.scheduled_episodes then
-      for unix_timestamp, episode_title in pairs(database.scheduled_episodes) do
+      for unix_timestamp, episode_title_or_file in pairs(database.scheduled_episodes) do
         if now >= tonumber(unix_timestamp) then
-          publish_episode(episode_title)
+          publish_episode(episode_title_or_file)
           database.scheduled_episodes[unix_timestamp] = nil
           -- save_database(database) -- publish_episode loads and saves the database itself, we should not save it here
           break
@@ -270,10 +361,12 @@ end
 
 
 
+os.execute("mkdir data")
+
 if options.new then
   new_episode(options.title, options.file_name, options.skip)
 elseif options.publish then
-  publish_episode(options.title)
+  publish_episode(options.title, options)
 elseif options.delete then
   delete_episode(options.title)
 elseif options.regenerate then

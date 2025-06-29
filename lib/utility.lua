@@ -212,12 +212,6 @@ end
 utility.is_file = function(file_name)
   local file = io.open(file_name, "r")
   if file then
-    -- local _, error_message = file:read(1) -- defaults to reading a whole line, so we read 1 byte instead
-    -- file:close()
-    -- if error_message == "Is a directory" then
-    --   return false
-    -- end
-    -- return true
     local _, error_message = file:read(0)
     if error_message then
       return false
