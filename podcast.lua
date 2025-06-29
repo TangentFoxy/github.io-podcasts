@@ -145,6 +145,10 @@ local function new_episode(episode_title, file_name, skip)
     end
   end
 
+  if not utility.is_file(episode.file_name .. ".jpg") then
+    os.execute("cp docs/podcast.jpg " .. (episode.file_name .. ".jpg"):enquote())
+  end
+
   if not options.skip.mp3tag then
     print("Adding artwork to MP3 file..")
     os.execute("ffmpeg -i " .. (episode.file_name .. ".mp3"):enquote() .. " -i " .. (episode.file_name .. ".jpg"):enquote() .. " -map_metadata 0 -map 0 -map 1 -acodec copy " .. (utility.temp_directory .. episode.file_name .. ".mp3"):enquote())
