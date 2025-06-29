@@ -35,10 +35,8 @@ end
 
 
 
+utility.required_program("ffmpeg")
 utility.required_program("ffprobe")
-if utility.OS == "Windows" then
-  utility.required_program("mp3tag")
-end
 
 local podcast = {}
 
@@ -148,8 +146,9 @@ local function new_episode(episode_title, file_name, skip)
   end
 
   if not options.skip.mp3tag then
-    print("Opening mp3tag to add episode artwork.\n  (This step must be completed manually, and then podcast.lua must be called again to finish this episode!)")
-    os.execute("mp3tag /fn:" .. (episode.file_name .. ".mp3"):enquote())
+    print("Adding artwork to MP3 file..")
+    os.execute("ffmpeg -i " .. (episode.file_name .. ".mp3"):enquote() .. " -i " .. (episode.file_name .. ".jpg"):enquote() .. " -map_metadata 0 -map 0 -map 1 -acodec copy " .. (utility.temp_directory .. episode.file_name .. ".mp3"):enquote())
+    os.execute("mv -f " .. (utility.temp_directory .. episode.file_name .. ".mp3"):enquote() .. " ./")
   end
 
   podcast.save_episode(episode)
