@@ -176,11 +176,13 @@ local function generate_feed(database)
   end
 
   local feed_content = etlua.compile(feed_template)(database)
+  feed_content = feed_content:gsub("%s+", " ")
   utility.open("docs/feed.xml", "w")(function(file)
     file:write(feed_content)
   end)
 
   local index_content = etlua.compile(index_page_template)(database)
+  index_content = index_content:gsub("%s+", " ")
   utility.open("docs/index.html", "w")(function(file)
     file:write(index_content)
   end)
@@ -208,6 +210,7 @@ local function generate_page(database, episode)
     episode_summary = summary,
     base_url = database.base_url,
   })
+  episode_page_content = episode_page_content:gsub("%s+", " ")
   utility.open("docs/" .. episode.file_name .. ".html", "w")(function(file)
     file:write(episode_page_content)
   end)
