@@ -27,8 +27,8 @@
     %>
     <% for _, i in ipairs(order) do %>
       <% local episode = episodes_data[ episodes_list[i] ] %>
-      <h2><a href="<%- base_url %><%- episode.urlencoded_title %>.html"><%= episode.title %></a></h2>
-      <img src="<%- base_url %><%- episode.urlencoded_title %>.jpg" />
+      <h2><a href="<%- base_url %><%- episode.urlencoded_file_name %>.html"><%= episode.title %></a></h2>
+      <img src="<%- base_url %><%- episode.urlencoded_file_name %>.jpg" />
       <%- episode.summary %>
     <% end %>
   <% end %>
