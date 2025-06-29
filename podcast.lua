@@ -89,6 +89,8 @@ convert_database = function(database)
       file:write(episode.summary)
     end)
     episode.summary = nil
+    episode.urlencoded_file_name = episode.urlencoded_title
+    episode.urlencoded_title = nil
     podcast.save_episode(episode)
     if episode.episode_number then
       local published_episode = database.published_episodes[episode.episode_number]
