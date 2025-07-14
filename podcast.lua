@@ -56,7 +56,7 @@ local convert_database
 
 local function load_database()
   -- TODO there should be a way to generate new without requiring it to already exist..
-  local database = utility.open("configuration.json", "r")(function(file)
+  local database = utility.open("configuration.json", "r", function(file)
     return json.decode(file:read("*all"))
   end)
   if not database.next_episode_number then
@@ -164,12 +164,12 @@ end
 
 local function generate_feed(database)
   local feed_template
-  utility.open("templates/feed.etlua", "r")(function(file)
+  utility.open("templates/feed.etlua", "r", function(file)
     feed_template = file:read("*all")
   end)
 
   local index_page_template
-  utility.open("templates/index_page.etlua", "r")(function(file)
+  utility.open("templates/index_page.etlua", "r", function(file)
     index_page_template = file:read("*all")
   end)
 
@@ -191,13 +191,13 @@ local function generate_feed(database)
 
   local feed_content = etlua.compile(feed_template)(database)
   feed_content = feed_content:gsub("%s+", " ")
-  utility.open("docs/feed.xml", "w")(function(file)
+  utility.open("docs/feed.xml", "w", function(file)
     file:write(feed_content:sub(1, -2))
   end)
 
   local index_content = etlua.compile(index_page_template)(database)
   index_content = index_content:gsub("%s+", " ")
-  utility.open("docs/index.html", "w")(function(file)
+  utility.open("docs/index.html", "w", function(file)
     file:write(index_content:sub(1, -2))
   end)
 
@@ -209,7 +209,7 @@ end
 
 local function generate_page(database, episode)
   local episode_page_template
-  utility.open("templates/episode_page.etlua", "r")(function(file)
+  utility.open("templates/episode_page.etlua", "r", function(file)
     episode_page_template = file:read("*all")
   end)
 
@@ -225,7 +225,7 @@ local function generate_page(database, episode)
     base_url = database.base_url,
   })
   episode_page_content = episode_page_content:gsub("%s+", " ")
-  utility.open("docs/" .. episode.file_name .. ".html", "w")(function(file)
+  utility.open("docs/" .. episode.file_name .. ".html", "w", function(file)
     file:write(episode_page_content:sub(1, -2))
   end)
 
